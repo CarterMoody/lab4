@@ -44,14 +44,6 @@ class interactive{
     private static final String PARSE_INT_ERROR = "        Invalid integer value (reverting to default value)";
     private static final String MEM_ARGS_ERROR  = "        Invalid amount of arguments (use: m num1 num2)";
 
-    private static void programCompleteMsg(){
-        float CPI = Globals.Cycles / Globals.instList.size();
-        System.out.println("Program complete");
-        System.out.print(String.format("CPI = " + "%-10s", CPI));
-        System.out.print(String.format("Cycles = " + "%-10s", Globals.Cycles));
-        System.out.println(String.format("Instructions = " + "%-10s", Globals.instList.size()));
-    }
-
     /* print registers */
     private static void dump() {
 
@@ -77,23 +69,8 @@ class interactive{
 
     }
 
-    private static void pipeline() {
-
-        System.out.println();
-        System.out.println("pc");
-
-        for (Map.Entry<String, String> entry : Globals.pipelineMap.entrySet()) {
-            
-            System.out.print(String.format("%-8s", entry.getKey()));
-            System.out.print(String.format("%-16s", entry.getValue()));
-        }
-
-        System.out.println("\n");
-
-    }
-
     /* run step(s) */
-    private static void stepClock(String userInput) {
+    private static void step(String userInput) {
         int pc = Globals.registerMap.get("pc");
         int numInst = 1;
         String args[] = userInput.split(" ");
@@ -195,7 +172,6 @@ class interactive{
             System.out.print("mips> ");
             userInput = sc.nextLine();
         }
-        programCompleteMsg();
         sc.close();
         System.exit(0);
     }
@@ -221,12 +197,12 @@ class interactive{
                 case 'h' : System.out.println(HELP_MESSAGE);    break;      // Show Help
                 case 'd' : dump();                              break;      // Dump Register State
                 case 'p' : pipeline();                          break;      // Show Pipeline Registers
-                //case 's' : step(line);                     break;      // Step through <line> Lines of Code
-                case 's' : stepClock(line);                     break;      // Step through <line> clock cycles
+                //case 's' : step(userInput);                     break;      // Step through <userInput> Lines of Code
+                case 's' : stepClock(userInput);                break;      // Step through <userInput> clock cycles
                 case 'r' : run();                               break;      // Run Until Completion
-                case 'm' : memory(line);                        break;      // Display Integer Memory Map
+                case 'm' : memory(userInput);                   break;      // Display Integer Memory Map
                 case 'c' : clear();                             break;      // Clear Registers, Memory, PC = 0
-                case 'q' : programCompleteMsg(); sc.close(); System.exit(0);          break;
+                case 'q' : sc.close(); System.exit(0);          break;
             }
         }
 

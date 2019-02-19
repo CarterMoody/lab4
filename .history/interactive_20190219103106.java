@@ -77,23 +77,8 @@ class interactive{
 
     }
 
-    private static void pipeline() {
-
-        System.out.println();
-        System.out.println("pc");
-
-        for (Map.Entry<String, String> entry : Globals.pipelineMap.entrySet()) {
-            
-            System.out.print(String.format("%-8s", entry.getKey()));
-            System.out.print(String.format("%-16s", entry.getValue()));
-        }
-
-        System.out.println("\n");
-
-    }
-
     /* run step(s) */
-    private static void stepClock(String userInput) {
+    private static void step(String userInput) {
         int pc = Globals.registerMap.get("pc");
         int numInst = 1;
         String args[] = userInput.split(" ");

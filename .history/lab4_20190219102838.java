@@ -56,15 +56,6 @@ class Globals {
         put("$ra", 0);  // return address
         
     }};
-
-    public static Map<String, String> pipelineMap= new LinkedHashMap<String, String>() {{
-        //put("pc", "");   // pc register
-        put("if/id", "empty");
-        put("id/exe", "empty");
-        put("exe/mem", "empty");
-        put("mem/wb", "empty");
-    }};
-
     public static Map<String, Integer> labelMap = new HashMap<String, Integer>();
     
     /* Lab 3 Objects */

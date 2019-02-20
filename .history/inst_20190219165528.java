@@ -356,7 +356,6 @@ public class inst {
 
     private void decode() {
         System.out.println(Globals.pipelineList.get(0));
-        // decode
     }
 
     private void fetch() {
@@ -383,8 +382,6 @@ public class inst {
         fetch();
 
         // move the pipeline here
-
-        System.out.println(Globals.pipelineList.get(0));
         
         /*
         switch(this.opType) {

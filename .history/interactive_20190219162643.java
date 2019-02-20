@@ -82,7 +82,7 @@ class interactive{
 
         System.out.println();
         System.out.println("pc      if/id   id/exe  exe/mem mem/wb");
-        System.out.print(Globals.registerMap.get("pc") + "       ");    // Print PC First, it's Separate from Pipeline Registers
+        System.out.print(Globals.registerMap.get("pc") + "       ");
 
         for (String entry : Globals.pipelineList){
             
@@ -114,6 +114,7 @@ class interactive{
             pc = Globals.registerMap.get("pc");
         }
 
+        System.out.println();
         pipeline();
 
     }

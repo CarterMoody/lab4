@@ -342,57 +342,43 @@ public class inst {
     }
 
     private void write_back() {
-        System.out.println(Globals.pipelineList.get(3));
+        // store values in registers or memory
     }
 
     private void memory() {
         // access the memory locations if needed
-        System.out.println(Globals.pipelineList.get(2));
     }
 
     private void execute() {
-        System.out.println(Globals.pipelineList.get(1));
+
     }
 
     private void decode() {
-        System.out.println(Globals.pipelineList.get(0));
-        // decode
+
     }
 
     private void fetch() {
         // get the opcode for the instruction
         // store it in the linked list
-
-        // if unconditional jump
-            // increment by offset
-        // if branch
-            // halt
-        Globals.registermap.put("pc", Globals.registermap.get("pc") + 1);
-        
-        
     }
 
-    /* runs a single clockcycle */
+    /* 
+        public method that calls the appropriate 
+        run helper method based on the opcode 
+    */
+
     public void run() {
-        Globals.Cycles += 1;        // Increment Total Clock Cycles
         write_back();
-        memory();
-        // if use after load then do not execute
-		    execute();
+		memory();
+		execute();
 		decode();
         fetch();
-
-        // move the pipeline here
-
-        System.out.println(Globals.pipelineList.get(0));
         
-        /*
         switch(this.opType) {
             case "RD"   : RDop();   break; 
             case "MEM"  : MEMop();  break;
             case "PC"   : PCop();   break;
         }
-        */
     }
 
 }

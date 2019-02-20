@@ -13,6 +13,7 @@ import java.lang.String;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -57,8 +58,8 @@ class Globals {
         
     }};
 
-    public static ArrayList<String> pipelineList = 
-        new ArrayList<String>(Arrays.asList("empty", "empty", "empty", "empty"));
+    public static LinkedList<String> pipelineList = 
+        new LinkedList<String>(Arrays.asList("empty", "empty", "empty", "empty"));
         
     public static Map<String, Integer> labelMap = new HashMap<String, Integer>();
     /* Lab 3 Objects */

@@ -34,7 +34,6 @@ class interactive{
     private static final String HELP_MESSAGE = 
         "\nh = show help" +
         "\nd = dump register state" +
-        "\np = show pipeline registers" +
         "\ns = single step through the program (i.e. execute 1 instruction and stop)" +
         "\ns num = step through num instructions of the program" +
         "\nr = run until the program ends" +
@@ -81,8 +80,7 @@ class interactive{
     private static void pipeline() {
 
         System.out.println();
-        System.out.println("pc      if/id   id/exe  exe/mem mem/wb");
-        System.out.print(Globals.registerMap.get("pc") + "       ");    // Print PC First, it's Separate from Pipeline Registers
+        System.out.println("pc        if/id        id/exe        exe/mem        mem/wb");
 
         for (String entry : Globals.pipelineList){
             
@@ -114,8 +112,7 @@ class interactive{
             pc = Globals.registerMap.get("pc");
         }
 
-        pipeline();
-
+        System.out.println("        " + numInst + " instruction(s) executed");
     }
 
     /* run until the program ends */
@@ -123,7 +120,7 @@ class interactive{
         int pc = Globals.registerMap.get("pc");
 
         while(pc != Globals.instList.size()) {
-            Globals.instList.get(pc).run();      // run instruction
+            Globals.instList.get(pc).run(); // run instruction
             pc = Globals.registerMap.get("pc");
         }
     }

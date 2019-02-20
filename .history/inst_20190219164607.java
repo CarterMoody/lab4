@@ -356,7 +356,6 @@ public class inst {
 
     private void decode() {
         System.out.println(Globals.pipelineList.get(0));
-        // decode
     }
 
     private void fetch() {
@@ -376,15 +375,10 @@ public class inst {
     public void run() {
         Globals.Cycles += 1;        // Increment Total Clock Cycles
         write_back();
-        memory();
-        // if use after load then do not execute
-		    execute();
+		memory();
+		execute();
 		decode();
         fetch();
-
-        // move the pipeline here
-
-        System.out.println(Globals.pipelineList.get(0));
         
         /*
         switch(this.opType) {

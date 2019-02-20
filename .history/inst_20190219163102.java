@@ -9,107 +9,8 @@ import java.util.HashMap;
 import java.util.Arrays;
 
 public class inst {
-
-    // This Map is used to Translate Registers to Their Binary Representaiton in 5 bit Strings
-    // fix serializable error
-    private static final Map<String, String> registerMap = new HashMap<String, String>() {{
-        put("$0", "00000");     // Register Zero
-        put("$zero", "00000");
-        put("$Zero", "00000");
-
-        put("$1", "00001");     // $at, WE DO NOT NEED TO SUPPORT THIS REGISTER
-
-        put("$2", "00010");     //Return Values from Functions
-        put("$v0", "00010");
-        put("$3", "00011");
-        put("$v1", "00011");
-
-        put("$4", "00100");      // Arguments to Functions $a0-$a3
-        put("$a0", "00100");
-        put("$5", "00101");
-        put("$a1", "00101");
-        put("$6", "00110");
-        put("$a2", "00110");
-        put("$7", "00111");
-        put("$a3", "00111");
-
-        put("$8", "01000");     // Temporary Registers $t0-$t7
-        put("$t0", "01000");
-        put("$9", "01001");
-        put("$t1", "01001");
-        put("$10", "01010");
-        put("$t2", "01010");
-        put("$11", "01011");
-        put("$t3", "01011");
-        put("$12", "01100");
-        put("$t4", "01100");
-        put("$13", "01101");
-        put("$t5", "01101");
-        put("$14", "01110");
-        put("$t6", "01110");
-        put("$15", "01111");
-        put("$t7", "01111");
-
-        put("$16", "10000");    // Saved Registers $s0-$s7
-        put("$s0", "10000");             
-        put("$17", "10001");
-        put("$s1", "10001"); 
-        put("$18", "10010");
-        put("$s2", "10010"); 
-        put("$19", "10011");
-        put("$s3", "10011"); 
-        put("$20", "10100");
-        put("$s4", "10100"); 
-        put("$21", "10101");
-        put("$s5", "10101"); 
-        put("$22", "10110");
-        put("$s6", "10110"); 
-        put("$23", "10111");
-        put("$s7", "10111");         
-
-        put("$24", "11000");    // More Temporary Registers $t8-$t9
-        put("$t8", "11000");
-        put("$25", "11001");
-        put("$t9", "11001");     
-        
-        put("$26", "11010");    // Reserved for Kernel DO NOT NEED TO SUPPORT
-        put("$k0", "11010");
-        put("$27", "11011");
-        put("$k1", "11011"); 
-        
-        put("$28", "11100");    // Global Area Pointer
-        put("$gp", "11100");
-        
-        put("$29", "11101");    // Stack Pointer
-        put("$sp", "11101");
-        
-        put("$30", "11110");    // Frame Pointer
-        put("$fp", "11110");
-
-        put("$31", "11111");    // Return Address
-        put("$ra", "11111");   
-        
-    }};
-
-    private static final Map<String, String> opcodeMap = new HashMap<String, String>() {{
-        put("and", "100100");
-        put("or", "100101");
-        put("add", "100000");
-        put("addi", "001000");
-        put("sll", "000000");
-        put("sub", "100010");
-        put("slt", "101010");
-        put("beq", "000100");
-        put("bne", "000101");
-        put("lw", "100011");
-        put("sw", "101011");
-        put("j", "000010");
-        put("jr", "001000");
-        put("jal", "000011");
-    }};
     
     private String opcode;
-    private String opType;      // string for run function
     private int lineNo;         // position of opcode in the assembly file
     private String binary;      // stores the binary form of opcode instruction
 
@@ -356,35 +257,24 @@ public class inst {
 
     private void decode() {
         System.out.println(Globals.pipelineList.get(0));
-        // decode
     }
 
     private void fetch() {
         // get the opcode for the instruction
         // store it in the linked list
-
-        // if unconditional jump
-            // increment by offset
-        // if branch
-            // halt
-        Globals.registermap.put("pc", Globals.registermap.get("pc") + 1);
-        
-        
     }
 
-    /* runs a single clockcycle */
+    /* 
+        public method that calls the appropriate 
+        run helper method based on the opcode 
+    */
+
     public void run() {
-        Globals.Cycles += 1;        // Increment Total Clock Cycles
         write_back();
-        memory();
-        // if use after load then do not execute
-		    execute();
+		memory();
+		execute();
 		decode();
         fetch();
-
-        // move the pipeline here
-
-        System.out.println(Globals.pipelineList.get(0));
         
         /*
         switch(this.opType) {

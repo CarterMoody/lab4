@@ -1,36 +1,47 @@
-lab3:
+lab4:
 	javac *.java
 
 clean:
 	rm *.class
 
 test:
-	java lab3 in/lab3_fib.asm scripts/lab3_fib.script > my/lab3_fib.output
-	diff -w -B my/lab3_fib.output out/lab3_fib.output
+	java lab4 in/lab4_test1.asm scripts/lab4_test1.asm > my/lab4_test1.output
+	diff -w -B my/lab4_test1.output out/lab4_test1.output
 	echo
-	java lab3 in/lab3_test3.asm scripts/lab3_test3.script > my/lab3_test3.output
-	diff -w -B my/lab3_test3.output out/lab3_test3.output
+	java lab4 in/lab4_test2.asm scripts/lab4_test2.asm > my/lab4_test2.output
+	diff -w -B my/lab4_test2.output out/lab4_test2.output
 	echo
-	java lab3 in/sum_10.asm scripts/sum_10.script > my/sum_10.output
-	diff -w -B my/sum_10.output out/sum_10.output
+	java lab4 in/lab4_fib10.asm scripts/lab4_fib10.asm > my/lab4_fib10.output
+	diff -w -B my/lab4_fib10.output out/lab4_fib10.output
+	echo
+	java lab4 in/lab4_fib20.asm scripts/lab4_fib20.asm > my/lab4_fib20.output
+	diff -w -B my/lab4_fib20.output out/lab4_fib20.output
+	echo
 
-test1: 
-	java lab3 in/lab3_fib.asm scripts/lab3_fib.script
-	java lab3 in/lab3_fib.asm scripts/lab3_fib.script > my/lab3_fib.output
+test1:
+	java lab4 in/lab4_test1.asm scripts/lab4_test1.asm
+	java lab4 in/lab4_test1.asm scripts/lab4_test1.asm > my/lab4_test1.output
 	echo
 	echo
-	diff -w -B my/lab3_fib.output out/lab3_fib.output
+	diff -w -B my/lab4_test1.output out/lab4_test1.output
 
-test2: 
-	java lab3 in/lab3_test3.asm scripts/lab3_test3.script
-	java lab3 in/lab3_test3.asm scripts/lab3_test3.script > my/lab3_test3.output
+test2:
+	java lab4 in/lab4_test2.asm scripts/lab4_test2.asm
+	java lab4 in/lab4_test2.asm scripts/lab4_test2.asm > my/lab4_test2.output
 	echo
 	echo
-	diff -w -B my/lab3_test3.output out/lab3_test3.output
+	diff -w -B my/lab4_test2.output out/lab4_test2.output
 
 test3: 
-	java lab3 in/sum_10.asm scripts/sum_10.script
+	java lab4 in/lab4_fib10.asm scripts/lab4_fib10.asm
+	java lab4 in/lab4_fib10.asm scripts/lab4_fib10.asm > my/lab4_fib10.output
 	echo
 	echo
-	java lab3 in/sum_10.asm scripts/sum_10.script > my/sum_10.output
-	diff -w -B my/sum_10.output out/sum_10.output
+	diff -w -B my/lab4_fib10.output out/lab4_fib10.output
+
+test4: 
+	java lab4 in/lab4_fib20.asm scripts/lab4_fib20.asm
+	java lab4 in/lab4_fib20.asm scripts/lab4_fib20.asm > my/lab4_fib20.output
+	echo
+	echo
+	diff -w -B my/lab4_fib20.output out/lab4_fib20.output

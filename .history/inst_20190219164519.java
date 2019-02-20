@@ -356,18 +356,13 @@ public class inst {
 
     private void decode() {
         System.out.println(Globals.pipelineList.get(0));
-        // decode
     }
 
     private void fetch() {
         // get the opcode for the instruction
         // store it in the linked list
 
-        // if unconditional jump
-            // increment by offset
-        // if branch
-            // halt
-        Globals.registermap.put("pc", Globals.registermap.get("pc") + 1);
+        int PC = Globals.registerMap.get("pc") + 1;
         
         
     }
@@ -376,15 +371,10 @@ public class inst {
     public void run() {
         Globals.Cycles += 1;        // Increment Total Clock Cycles
         write_back();
-        memory();
-        // if use after load then do not execute
-		    execute();
+		memory();
+		execute();
 		decode();
         fetch();
-
-        // move the pipeline here
-
-        System.out.println(Globals.pipelineList.get(0));
         
         /*
         switch(this.opType) {

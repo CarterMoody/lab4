@@ -1,6 +1,33 @@
-# 315-lab03
+# 315-lab04
 
-## Goals:
-- change name inst class (mroe in line with Java syntax; change names of classes in general)
-- possibly add integer for base and sa into inst object (for logic to be more legible; not technically required)
-- incorporate R, I, J instruction format (possibly)
+## Stuff to change:
+-> (h) update help message to reflect addition of pipe option
+- (p) add an option that reads pipe registers
+- (s) should be one clock-cycle, not just one step this time
+    - this means that some instructions will be in the middle of execution
+- (r) include a message at the end with CPI, cycles and instructions
+- (c) clears:
+    - general registers
+    - pipe registers
+    - CPI/cycles/instructions object
+
+# Data Structures
+
+- pipe registers data structure
+    - might make a class within a class for the pipe registers (don't need key values to access)
+    - this class will include a print method 
+
+- in run, have a method for each pipeline:
+    - pc      
+    - if/id   
+    - id/exe  
+    - exe/mem 
+    - mem/wb
+
+- global data structure that keeps track of:
+    - CPI
+    - cycles
+    - instructions
+
+# Other Goals
+- remove binary stuff

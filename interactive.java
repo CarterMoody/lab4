@@ -20,9 +20,10 @@ import java.util.Arrays;
 User Options:
     h = show help
     d = dump register state
-    s = single step through the program (i.e. execute 1 instruction and stop)
-    s num = step through num instructions of the program
-    r = run until the program ends
+    p = show pipeline registers
+    s = step through a single clock cycle step (i.e. simulate 1 cycle and stop)
+    s num = step through num clock cycles
+    r = run until the program ends and display timing summary
     m num1 num2 = display data memory from location num1 to num2
     c = clear all registers, memory, and the program counter to 0
     q = exit the program
@@ -35,23 +36,15 @@ class interactive{
         "\nh = show help" +
         "\nd = dump register state" +
         "\np = show pipeline registers" +
-        "\ns = single step through the program (i.e. execute 1 instruction and stop)" +
-        "\ns num = step through num instructions of the program" +
-        "\nr = run until the program ends" +
+        "\ns = step through a single clock cycle step (i.e. simulate 1 cycle and stop)" +
+        "\ns num = step through num clock cycles" +
+        "\nr = run until the program ends and display timing summary" +
         "\nm num1 num2 = display data memory from location num1 to num2" +
         "\nc = clear all registers, memory, and the program counter to 0" +
         "\nq = exit the program\n";
 
     private static final String PARSE_INT_ERROR = "        Invalid integer value (reverting to default value)";
     private static final String MEM_ARGS_ERROR  = "        Invalid amount of arguments (use: m num1 num2)";
-
-    private static void programCompleteMsg(){
-        float CPI = Globals.Cycles / Globals.instList.size();
-        System.out.println("Program complete");
-        System.out.print(String.format("CPI = " + "%-10s", CPI));
-        System.out.print(String.format("Cycles = " + "%-10s", Globals.Cycles));
-        System.out.println(String.format("Instructions = " + "%-10s", Globals.instList.size()));
-    }
 
     /* print registers */
     private static void dump() {
@@ -84,9 +77,9 @@ class interactive{
         System.out.println("pc      if/id   id/exe  exe/mem mem/wb");
         System.out.print(Globals.registerMap.get("pc") + "       ");    // Print PC First, it's Separate from Pipeline Registers
 
-        for (String entry : Globals.pipelineList){
+        for (inst entry : Globals.pipelineList){
             
-            System.out.print(String.format("%-8s", entry));
+            System.out.print(String.format("%-8s", entry.getOpcode()));
             // System.out.print(String.format("%-16s", entry));
         }
 
@@ -99,6 +92,7 @@ class interactive{
         int pc = Globals.registerMap.get("pc");
         int numInst = 1;
         String args[] = userInput.split(" ");
+        inst nextInst;
 
         if(args.length == 2) {
             try {
@@ -109,8 +103,22 @@ class interactive{
         }
 
         /* run instructions (until end reached) */
+        // NOTE! Change the way loop is ended
         for(int i = 0; (i < numInst) && (pc != Globals.instList.size()); i++) {
-            Globals.instList.get(pc).run(); // run instruction
+            
+            nextInst = Globals.instList.get(pc);
+
+            Globals.Cycles += 1;    // increment Total Clock Cycles
+
+            // if any inst in delay position
+                // then (new inst("empty", null, 0).fetch())
+            Globals.pipelineList.get(3).write_back();
+            Globals.pipelineList.get(2).memory();
+            // if use after load then do not execute
+		    Globals.pipelineList.get(1).execute();
+		    Globals.pipelineList.get(0).decode();
+            Globals.instList.get(pc).fetch();        // fetch the next instruction
+
             pc = Globals.registerMap.get("pc");
         }
 
@@ -118,14 +126,26 @@ class interactive{
 
     }
 
+    /* prints CPI info */
+    private static void programCompleteMsg(){
+        float CPI = Globals.Cycles / Globals.instList.size();
+        System.out.println("Program complete");
+        System.out.print(String.format("CPI = " + "%-10s", CPI));
+        System.out.print(String.format("Cycles = " + "%-10s", Globals.Cycles));
+        System.out.println(String.format("Instructions = " + "%-10s", Globals.instList.size()));
+    }
+
     /* run until the program ends */
     private static void run() {
+        /*
         int pc = Globals.registerMap.get("pc");
 
         while(pc != Globals.instList.size()) {
             Globals.instList.get(pc).run();      // run instruction
             pc = Globals.registerMap.get("pc");
         }
+        programCompleteMsg();
+        */
     }
 
     /* m num1 num2 = display data memory from location num1 to num2 */
@@ -189,7 +209,6 @@ class interactive{
                 case 'h' : System.out.println(HELP_MESSAGE);    break;      // Show Help
                 case 'd' : dump();                              break;      // Dump Register State
                 case 'p' : pipeline();                          break;      // Show Pipeline Registers
-                //case 's' : step(userInput);                     break;      // Step through <userInput> Lines of Code
                 case 's' : stepClock(userInput);                break;      // Step through <userInput> clock cycles
                 case 'r' : run();                               break;      // Run Until Completion
                 case 'm' : memory(userInput);                   break;      // Display Integer Memory Map
@@ -198,7 +217,6 @@ class interactive{
             System.out.print("mips> ");
             userInput = sc.nextLine();
         }
-        programCompleteMsg();
         sc.close();
         System.exit(0);
     }
@@ -224,12 +242,11 @@ class interactive{
                 case 'h' : System.out.println(HELP_MESSAGE);    break;      // Show Help
                 case 'd' : dump();                              break;      // Dump Register State
                 case 'p' : pipeline();                          break;      // Show Pipeline Registers
-                //case 's' : step(line);                     break;      // Step through <line> Lines of Code
                 case 's' : stepClock(line);                     break;      // Step through <line> clock cycles
                 case 'r' : run();                               break;      // Run Until Completion
                 case 'm' : memory(line);                        break;      // Display Integer Memory Map
                 case 'c' : clear();                             break;      // Clear Registers, Memory, PC = 0
-                case 'q' : programCompleteMsg(); sc.close(); System.exit(0);          break;
+                case 'q' : sc.close(); System.exit(0);          break;
             }
         }
 

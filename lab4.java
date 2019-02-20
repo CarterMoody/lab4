@@ -1,7 +1,7 @@
 /*
     Name:         Robert Hensley, Carter Moody
     Section:      09
-    Description:  parses an .asm file and prints the the instructions in binary
+    Description:  MIPS simulator (with pipelines)
 */
 
 /* I/O Libraries */
@@ -14,12 +14,13 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Arrays;
 
 class Globals {
     /* Constants */
 
-    public static final String ARGS_ERROR = "\nUse the following command line arguments -> java lab2 file.asm";
+    public static final String ARGS_ERROR = "\nUse the following command line arguments -> java lab4 file.asm";
     public static final String LABEL_ERROR = "\nLabel incorrectly formatted (must be alphanumeric): ";
     public static final int MEMORY_SIZE = 8192;
 
@@ -57,8 +58,13 @@ class Globals {
         
     }};
 
-    public static ArrayList<String> pipelineList = 
-        new ArrayList<String>(Arrays.asList("empty", "empty", "empty", "empty"));
+    public static LinkedList<inst> pipelineList = 
+        new LinkedList<inst>(Arrays.asList(
+            new inst("empty", null, 0),
+            new inst("empty", null, 0),
+            new inst("empty", null, 0),
+            new inst("empty", null, 0)
+        ));
         
     public static Map<String, Integer> labelMap = new HashMap<String, Integer>();
     /* Lab 3 Objects */

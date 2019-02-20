@@ -108,8 +108,7 @@ public class inst {
         put("jal", "000011");
     }};
     
-    private String opcode;
-    private String opType;      // string for run function
+    private String opcode = "empty";
     private int lineNo;         // position of opcode in the assembly file
     private String binary;      // stores the binary form of opcode instruction
 
@@ -119,7 +118,15 @@ public class inst {
     private String rt;          // source register for:         and, or, add, sub, slt, addi, beq, bne, lw, sw, sll
     private String base;        // base register for:           lw, sw
     private int imm = 0;        // immediate integer for:       addi, beq, bne, lw (offset), sw (offset), sll (sa), j, jal
-    
+
+    /* register file */
+    private int r1 = 0;
+    private int r2 = 0;
+
+    /* other pipeline */
+    private int ALUresult = 0;  // execute
+    private int MEMresult = 0;  // memory
+    private String wr;          // write_back
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;
@@ -168,8 +175,6 @@ public class inst {
             registerMap.get(this.rd) + 
             " 00000 " + opcodeMap.get(this.opcode);
 
-            this.opType = "RD";
-
         } 
         
         // case_2: addi beq bne
@@ -183,7 +188,6 @@ public class inst {
             registerMap.get(this.rt) + " " + 
             immediateBinary(16);
 
-            this.opType = (this.opcode.equals("addi")) ? "RD" : "PC"; 
         } 
         
         // case_3: lw sw
@@ -199,7 +203,6 @@ public class inst {
             registerMap.get(this.rt) + " " +
             immediateBinary(16);
 
-            this.opType = "MEM";
         } 
         
         // case_4: sll
@@ -215,8 +218,6 @@ public class inst {
             immediateBinary(5) + " " +
             opcodeMap.get(this.opcode);
 
-            this.opType = "RD";
-
         } 
         
         // case_5: j jal
@@ -226,8 +227,6 @@ public class inst {
 
             this.binary = opcodeMap.get(this.opcode) + " " +
             immediateBinary(26);
-
-            this.opType = "PC";
         } 
         
         // case_6: jr
@@ -240,7 +239,6 @@ public class inst {
             " 000000000000000 " +
             opcodeMap.get(this.opcode);
 
-            this.opType = "PC";
         }
 
     }
@@ -257,142 +255,123 @@ public class inst {
         System.out.println(this.binary);
     }
 
+    public String getOpcode() {
+        return this.opcode;
+    }
+
     /* opcode logic */
 
-    /* 
-        and, or, add, addi, sub, sll, slt 
-        - operations that store a result in rd
-    */
-    private void RDop() {
+    /*
+        - write to register file
+        - remove instruction from pipeline
+    */ 
+    public void write_back() {
 
-        int PC = Globals.registerMap.get("pc");
-        int rs = Globals.registerMap.get(this.rs);
-        int rt = Globals.registerMap.get(this.rt);
-        int rd = 0;
+        // write to register file
+        if (this.opcode.matches("and|or|add|addi|sub|sll|slt")) {
+            Globals.registerMap.put(this.wr, this.ALUresult);   // store write
+        } 
 
-        switch(this.opcode) {
-            case "and"  : rd = rs & rt;             break;
-            case "or"   : rd = rs | rt;             break;
-            case "add"  : rd = rs + rt;             break;
-            case "addi" : rs = rt + imm;            break;
-            case "sub"  : rd = rs - rt;             break;
-            case "sll"  : rd = rt << this.imm;      break;
-            case "slt"  : rd = (rs < rt) ? 1 : 0;   break;
+        if (this.opcode.equals("lw")) {
+            Globals.registerMap.put(this.wr, this.MEMresult);
         }
-        
-        if (this.opcode.equals("addi")) {
-            Globals.registerMap.put(this.rs, rs);   // store rd
-        } else {
-            Globals.registerMap.put(this.rd, rd);   // store rd
-        }
-        
-        Globals.registerMap.put("pc", PC + 1);      // increment PC
 
+        // remove instruction from pipeline
+        Globals.pipelineList.remove(3);
     }
 
-    /* 
-        lw, sw 
-        - memory operations
-        - note: imm in this case is base
+    /*
+        - read/write from memory
     */
-    private void MEMop() {
-        int PC = Globals.registerMap.get("pc");
-        int base = Globals.registerMap.get(this.base);
+    public void memory() {
+
+        if(this.opcode.equals("lw"))
+            System.out.println(this.wr);
 
         switch(this.opcode) {
-            case "lw"   : Globals.registerMap.put(this.rt, Globals.memory[base + imm]);
+            case "lw"   : this.MEMresult = Globals.memory[this.ALUresult];
             break;
-            case "sw"   : Globals.memory[base + imm] = Globals.registerMap.get(this.rt);
+            case "sw"   : Globals.memory[this.r1 + imm] = this.r2;
             break;
         }
-        
-        Globals.registerMap.put("pc", PC + 1);  // increment PC
+
     }
 
-    /* 
-        beq, bne, jal, j, jr
-        - operations that change the PC 
+    /*
+        - overwrite the PC (jump/break)
+        - ALU arithmetic 
     */
-    private void PCop() {
-        int PC = Globals.registerMap.get("pc");
-        int rs = 0;
-        int rt = 0;
-        int offset = 0;
+    public void execute() {
 
-        // make this less messy
-        if(!(this.opcode.equals("j") || this.opcode.equals("jal"))) {
-            if(!this.opcode.equals("jr"))
-                rt = Globals.registerMap.get(this.rt);
-            rs = Globals.registerMap.get(this.rs);
-        }
+        if(this.opcode.equals("lw"))
+            System.out.println(this.wr);
 
+        // Overwrite the PC
         switch(this.opcode) {
-            case "beq"  : offset = (rs == rt) ? (this.imm + 1) : 1;     break;
-            case "bne"  : offset = (rs != rt) ? (this.imm + 1) : 1;     break;
-            case "jal"  : Globals.registerMap.put("$ra", PC + 1);   // continue
-            case "j"    : offset = this.imm;                            break;
-            case "jr"   : offset = rs;                                  break; 
-        }   
-
-        if(this.opcode.charAt(0) == 'j') {
-            Globals.registerMap.put("pc", offset);  // increment PC
-        } else {
-            Globals.registerMap.put("pc", PC + offset);  // increment PC
+            default : break;
         }
-    }
 
-    private void write_back() {
-        System.out.println(Globals.pipelineList.get(3));
-    }
+        // ALU arithmetic
+        switch(this.opcode) {
+            case "and"  : this.ALUresult = this.r1 & this.r2;           break;
+            case "or"   : this.ALUresult = this.r1 | this.r2;           break;
+            case "add"  : this.ALUresult = this.r1 + this.r2;           break;
+            case "addi" : this.ALUresult = this.r1 + this.r2;           break;
+            case "sub"  : this.ALUresult = this.r1 - this.r2;           break;
+            case "sll"  : this.ALUresult = this.r1 << this.r2;          break;
+            case "slt"  : this.ALUresult = (this.r1 < this.r2) ? 1 : 0; break;
 
-    private void memory() {
-        // access the memory locations if needed
-        System.out.println(Globals.pipelineList.get(2));
-    }
-
-    private void execute() {
-        System.out.println(Globals.pipelineList.get(1));
-    }
-
-    private void decode() {
-        System.out.println(Globals.pipelineList.get(0));
-        // decode
-    }
-
-    private void fetch() {
-        // get the opcode for the instruction
-        // store it in the linked list
-
-        // if unconditional jump
-            // increment by offset
-        // if branch
-            // halt
-        Globals.registermap.put("pc", Globals.registermap.get("pc") + 1);
-        
-        
-    }
-
-    /* runs a single clockcycle */
-    public void run() {
-        Globals.Cycles += 1;        // Increment Total Clock Cycles
-        write_back();
-        memory();
-        // if use after load then do not execute
-		    execute();
-		decode();
-        fetch();
-
-        // move the pipeline here
-
-        System.out.println(Globals.pipelineList.get(0));
-        
-        /*
-        switch(this.opType) {
-            case "RD"   : RDop();   break; 
-            case "MEM"  : MEMop();  break;
-            case "PC"   : PCop();   break;
+            // memory operations
+            case "sw"   :
+            case "lw"   : this.ALUresult = this.r1 + this.imm;          break;
         }
-        */
+        
+    }
+
+    /*
+        - get r1, r2, wr
+    */
+    public void decode() {
+
+        // immediate (addi | sll)
+        if(this.opcode.matches("addi|sll")) {
+            this.r1 = Globals.registerMap.get(this.rt);
+            this.r2 = this.imm;
+            this.wr = (this.opcode.equals("addi")) ? this.rt : this.rd; 
+        }
+
+        // non-immediate (and | or | add | sub | slt)
+        if(this.opcode.matches("and|or|add|sub|slt")) {
+            this.r1 = Globals.registerMap.get(this.rs);
+            this.r2 = Globals.registerMap.get(this.rt);
+            this.wr = this.rd;
+        }
+
+        // memory operations
+        if(this.opcode.matches("lw|sw")) {
+            this.r1 = Globals.registerMap.get(this.base);
+            this.r2 = Globals.registerMap.get(this.rt); // null if lw
+            this.wr = this.rt;                          // null if sw
+        }
+
+        if(this.opcode.equals("lw")) {
+            System.out.println(this.rt);
+            System.out.println(this.wr);
+        }
+
+    }
+
+    /*
+        - add instruction to pipeline
+        - increment PC
+    */
+    public void fetch() {
+        // add instruction to pipelineList
+        Globals.pipelineList.add(0, this);
+
+        // increment PC
+        Globals.registerMap.put("pc", Globals.registerMap.get("pc") + 1);
+        
     }
 
 }

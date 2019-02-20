@@ -45,3 +45,15 @@ test4:
 	echo
 	echo
 	diff -w -B my/lab4_fib20.output out/lab4_fib20.output
+
+interact1:
+	java lab4 in/lab4_test1.asm
+
+interact2:
+	java lab4 in/lab4_test2.asm
+
+interact3:
+	java lab4 in/lab4_fib10.asm
+
+interact4:
+	java lab4 in/lab4_fib20.asm

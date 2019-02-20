@@ -354,8 +354,10 @@ public class inst {
         // add instruction to pipelineList
         Globals.pipelineList.add(0, this);
 
-        // increment PC
-        Globals.registerMap.put("pc", Globals.registerMap.get("pc") + 1);
+        // increment PC (if not at the end)
+        if(!this.opcode.equals("empty")) {
+            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + 1);
+        }
         
     }
 

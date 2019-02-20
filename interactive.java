@@ -104,6 +104,9 @@ class interactive{
 
         /* run instructions (until end reached) */
         // NOTE! Change the way loop is ended
+
+        System.out.println(pc);
+        System.out.println(Globals.instList.size());
         for(int i = 0; (i < numInst) && (pc != Globals.instList.size()); i++) {
             
             wb  = Globals.pipelineList.get(3); 
@@ -118,6 +121,7 @@ class interactive{
             mem.memory();
             ex.execute();
             
+            // stall for lw
             if((ex.opcode.equals("lw")) && 
                ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt)))) {
                 Globals.pipelineList.add(1, new inst("stall", null, 0));
@@ -127,6 +131,29 @@ class interactive{
             }
 
             pc = Globals.registerMap.get("pc");
+        }
+
+        if(pc == Globals.instList.size()) {
+
+            wb  = Globals.pipelineList.get(3); 
+            mem = Globals.pipelineList.get(2);      
+            ex  = Globals.pipelineList.get(1);
+            d   = Globals.pipelineList.get(0);
+            f = new inst("empty", null, 0); // check for empty
+
+            wb.write_back();
+            mem.memory();
+            ex.execute();
+            
+            // stall for lw
+            if((ex.opcode.equals("lw")) && 
+               ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt)))) {
+                Globals.pipelineList.add(1, new inst("stall", null, 0));
+            } else {
+                d.decode();
+                f.fetch();        // fetch the next instruction
+            }
+            
         }
 
         pipeline();

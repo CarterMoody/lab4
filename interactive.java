@@ -79,7 +79,7 @@ class interactive{
 
         for (inst entry : Globals.pipelineList){
             
-            System.out.print(String.format("%-8s", entry.getOpcode()));
+            System.out.print(String.format("%-8s", entry.opcode));
             // System.out.print(String.format("%-16s", entry));
         }
 
@@ -92,7 +92,7 @@ class interactive{
         int pc = Globals.registerMap.get("pc");
         int numInst = 1;
         String args[] = userInput.split(" ");
-        inst nextInst;
+        inst wb, mem, ex, d, f;
 
         if(args.length == 2) {
             try {
@@ -106,18 +106,25 @@ class interactive{
         // NOTE! Change the way loop is ended
         for(int i = 0; (i < numInst) && (pc != Globals.instList.size()); i++) {
             
-            nextInst = Globals.instList.get(pc);
+            wb  = Globals.pipelineList.get(3); 
+            mem = Globals.pipelineList.get(2);      
+            ex  = Globals.pipelineList.get(1);
+            d   = Globals.pipelineList.get(0);
+            f   = Globals.instList.get(pc);
 
             Globals.Cycles += 1;    // increment Total Clock Cycles
 
-            // if any inst in delay position
-                // then (new inst("empty", null, 0).fetch())
-            Globals.pipelineList.get(3).write_back();
-            Globals.pipelineList.get(2).memory();
-            // if use after load then do not execute
-		    Globals.pipelineList.get(1).execute();
-		    Globals.pipelineList.get(0).decode();
-            Globals.instList.get(pc).fetch();        // fetch the next instruction
+            wb.write_back();
+            mem.memory();
+            ex.execute();
+            
+            if((ex.opcode.equals("lw")) && 
+               ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt)))) {
+                Globals.pipelineList.add(1, new inst("stall", null, 0));
+            } else {
+                d.decode();
+                f.fetch();        // fetch the next instruction
+            }
 
             pc = Globals.registerMap.get("pc");
         }
@@ -128,24 +135,48 @@ class interactive{
 
     /* prints CPI info */
     private static void programCompleteMsg(){
+        
         float CPI = Globals.Cycles / Globals.instList.size();
-        System.out.println("Program complete");
-        System.out.print(String.format("CPI = " + "%-10s", CPI));
+        System.out.println("\nProgram complete");
+        System.out.print(String.format("CPI = " + "%-10f", CPI));
         System.out.print(String.format("Cycles = " + "%-10s", Globals.Cycles));
-        System.out.println(String.format("Instructions = " + "%-10s", Globals.instList.size()));
+        System.out.println(String.format("Instructions = " + "%-10s\n", Globals.instList.size()));
+        
     }
 
     /* run until the program ends */
     private static void run() {
-        /*
+
+        inst wb, mem, ex, d, f;
+
         int pc = Globals.registerMap.get("pc");
 
         while(pc != Globals.instList.size()) {
-            Globals.instList.get(pc).run();      // run instruction
+            wb  = Globals.pipelineList.get(3); 
+            mem = Globals.pipelineList.get(2);      
+            ex  = Globals.pipelineList.get(1);
+            d   = Globals.pipelineList.get(0);
+            f   = Globals.instList.get(pc);
+
+            Globals.Cycles += 1;    // increment Total Clock Cycles
+
+            wb.write_back();
+            mem.memory();
+            ex.execute();
+            
+            if((ex.opcode.equals("lw")) && 
+               ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt)))) {
+                Globals.pipelineList.add(1, new inst("stall", null, 0));
+            } else {
+                d.decode();
+                f.fetch();        // fetch the next instruction
+            }
+
             pc = Globals.registerMap.get("pc");
         }
+
+
         programCompleteMsg();
-        */
     }
 
     /* m num1 num2 = display data memory from location num1 to num2 */

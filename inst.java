@@ -108,14 +108,14 @@ public class inst {
         put("jal", "000011");
     }};
     
-    private String opcode = "empty";
+    public String opcode = "empty";
     private int lineNo;         // position of opcode in the assembly file
     private String binary;      // stores the binary form of opcode instruction
 
     /* instruction arguments */
-    private String rd;          // destination register for:    and, or, add, sub, slt, sll 
-    private String rs;          // source register for:         and, or, add, sub, slt, addi, beq, bne, jr
-    private String rt;          // source register for:         and, or, add, sub, slt, addi, beq, bne, lw, sw, sll
+    public String rd;          // destination register for:    and, or, add, sub, slt, sll 
+    public String rs;          // source register for:         and, or, add, sub, slt, addi, beq, bne, jr
+    public String rt;          // source register for:         and, or, add, sub, slt, addi, beq, bne, lw, sw, sll
     private String base;        // base register for:           lw, sw
     private int imm = 0;        // immediate integer for:       addi, beq, bne, lw (offset), sw (offset), sll (sa), j, jal
 
@@ -126,7 +126,7 @@ public class inst {
     /* other pipeline */
     private int ALUresult = 0;  // execute
     private int MEMresult = 0;  // memory
-    private String wr;          // write_back
+    public String wr;          // write_back
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;
@@ -255,10 +255,6 @@ public class inst {
         System.out.println(this.binary);
     }
 
-    public String getOpcode() {
-        return this.opcode;
-    }
-
     /* opcode logic */
 
     /*
@@ -285,9 +281,6 @@ public class inst {
     */
     public void memory() {
 
-        if(this.opcode.equals("lw"))
-            System.out.println(this.wr);
-
         switch(this.opcode) {
             case "lw"   : this.MEMresult = Globals.memory[this.ALUresult];
             break;
@@ -303,10 +296,7 @@ public class inst {
     */
     public void execute() {
 
-        if(this.opcode.equals("lw"))
-            System.out.println(this.wr);
-
-        // Overwrite the PC
+        // Overwrite the PC (jump stuff)
         switch(this.opcode) {
             default : break;
         }
@@ -352,11 +342,6 @@ public class inst {
             this.r1 = Globals.registerMap.get(this.base);
             this.r2 = Globals.registerMap.get(this.rt); // null if lw
             this.wr = this.rt;                          // null if sw
-        }
-
-        if(this.opcode.equals("lw")) {
-            System.out.println(this.rt);
-            System.out.println(this.wr);
         }
 
     }

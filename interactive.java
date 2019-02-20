@@ -87,33 +87,14 @@ class interactive{
 
     }
 
-    /* run step(s) */
-    private static void stepClock(String userInput) {
-        int pc = Globals.registerMap.get("pc");
-        int numInst = 1;
-        String args[] = userInput.split(" ");
-        inst wb, mem, ex, d, f;
+    private static void pipelineStep(inst f) {
 
-        if(args.length == 2) {
-            try {
-                numInst = Integer.parseInt(args[1]); 
-            } catch (NumberFormatException e) {
-                System.out.println(PARSE_INT_ERROR);
-            }
-        }
+            inst wb, mem, ex, d;
 
-        /* run instructions (until end reached) */
-        // NOTE! Change the way loop is ended
-
-        System.out.println(pc);
-        System.out.println(Globals.instList.size());
-        for(int i = 0; (i < numInst) && (pc != Globals.instList.size()); i++) {
-            
             wb  = Globals.pipelineList.get(3); 
             mem = Globals.pipelineList.get(2);      
             ex  = Globals.pipelineList.get(1);
             d   = Globals.pipelineList.get(0);
-            f   = Globals.instList.get(pc);
 
             Globals.Cycles += 1;    // increment Total Clock Cycles
 
@@ -129,31 +110,32 @@ class interactive{
                 d.decode();
                 f.fetch();        // fetch the next instruction
             }
+        
+    }
 
+    /* run step(s) */
+    private static void stepClock(String userInput) {
+        int pc = Globals.registerMap.get("pc");
+        int numInst = 1;
+        String args[] = userInput.split(" ");
+
+        if(args.length == 2) {
+            try {
+                numInst = Integer.parseInt(args[1]); 
+            } catch (NumberFormatException e) {
+                System.out.println(PARSE_INT_ERROR);
+            }
+        }
+
+        /* run instructions (until end reached) */
+        // NOTE! Change the way loop is ended
+        for(int i = 0; (i < numInst) && (pc != Globals.instList.size()); i++) {
+            pipelineStep(Globals.instList.get(pc));
             pc = Globals.registerMap.get("pc");
         }
 
         if(pc == Globals.instList.size()) {
-
-            wb  = Globals.pipelineList.get(3); 
-            mem = Globals.pipelineList.get(2);      
-            ex  = Globals.pipelineList.get(1);
-            d   = Globals.pipelineList.get(0);
-            f = new inst("empty", null, 0); // check for empty
-
-            wb.write_back();
-            mem.memory();
-            ex.execute();
-            
-            // stall for lw
-            if((ex.opcode.equals("lw")) && 
-               ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt)))) {
-                Globals.pipelineList.add(1, new inst("stall", null, 0));
-            } else {
-                d.decode();
-                f.fetch();        // fetch the next instruction
-            }
-            
+            pipelineStep(new inst("empty", null, 0));
         }
 
         pipeline();
@@ -201,7 +183,6 @@ class interactive{
 
             pc = Globals.registerMap.get("pc");
         }
-
 
         programCompleteMsg();
     }

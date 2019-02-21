@@ -92,24 +92,21 @@ class interactive{
         ex  = Globals.pipelineList.get(1);
         d   = Globals.pipelineList.get(0);
 
-        Globals.Cycles += 1;    // increment Total Clock Cycles
+        wb.write_back();    
+        mem.memory();       
+        ex.execute();       
+        d.decode();         // decode before checking lw
 
-        wb.write_back();
-        mem.memory();
-        ex.execute();
-            
-        d.decode();
-        System.out.println("d.wr: " + d.wr);
-        System.out.println("ex.wr: " + ex.wr);
         if((ex.opcode.equals("lw")) && 
            ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt))) &&
            !ex.wr.equals(d.wr)) {
             Globals.pipelineList.add(1, new inst("stall", null, 0));
-            Globals.Cycles += 1;    // increment Total Clock Cycles
         } else {
             d.decode();
             f.fetch();        // fetch the next instruction
         }
+
+        Globals.Cycles += 1;    // increment Total Clock Cycles
         
     }
 
@@ -138,13 +135,13 @@ class interactive{
         }
 
         /* run instructions (until end reached) */
-        for(int i = 0; (i < numInst) && (pc != Globals.instList.size()); i++) {
-            pipelineStep(Globals.instList.get(pc));
-            pc = Globals.registerMap.get("pc");
-        }
-
-        if((pc == Globals.instList.size()) && !emptyCheck()) {
-            pipelineStep(new inst("empty", null, 0));
+        for(int i = 0; (i < numInst) && (!emptyCheck() || (pc == 0)); i++) {
+            if((pc == Globals.instList.size())) {
+                pipelineStep(new inst("empty", null, 0));
+            } else {
+                pipelineStep(Globals.instList.get(pc));
+                pc = Globals.registerMap.get("pc");
+            }
         }
 
         pipeline();

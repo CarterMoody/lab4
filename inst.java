@@ -342,7 +342,6 @@ public class inst {
 
         // memory operations
         if(this.opcode.matches("lw|sw")) {
-            System.out.println(this.rt);
             this.r1 = Globals.registerMap.get(this.base);
             this.r2 = Globals.registerMap.get(this.rt); // null if lw
             this.wr = this.rt;                          // null if sw

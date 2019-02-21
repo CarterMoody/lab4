@@ -126,7 +126,7 @@ public class inst {
     /* other pipeline */
     private int ALUresult = 0;  // execute
     private int MEMresult = 0;  // memory
-    public String wr;          // write_back
+    public String wr;           // write_back
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;
@@ -313,8 +313,11 @@ public class inst {
 
             // memory operations
             case "sw"   :
-            case "lw"   : this.ALUresult = this.r1 + this.imm;          break;
+            case "lw"   : this.ALUresult = this.r1 + this.imm;          break;            
         }
+        if (!this.opcode.matches("empty|stall")){
+            Globals.Instructions += 1;                                    
+        }                        
         
     }
 
@@ -339,6 +342,7 @@ public class inst {
 
         // memory operations
         if(this.opcode.matches("lw|sw")) {
+            System.out.println(this.rt);
             this.r1 = Globals.registerMap.get(this.base);
             this.r2 = Globals.registerMap.get(this.rt); // null if lw
             this.wr = this.rt;                          // null if sw
@@ -355,7 +359,7 @@ public class inst {
         Globals.pipelineList.add(0, this);
 
         // increment PC (if not at the end)
-        if(!this.opcode.equals("empty")) {
+        if(!this.opcode.matches("empty|stall")) {
             Globals.registerMap.put("pc", Globals.registerMap.get("pc") + 1);
         }
         

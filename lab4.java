@@ -72,6 +72,7 @@ class Globals {
     public static ArrayList<inst> instList = new ArrayList<inst>();
 
     public static int Cycles = 0;
+    public static int Instructions = 0; // Used instead of 
 
 }
 

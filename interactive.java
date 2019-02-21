@@ -73,15 +73,11 @@ class interactive{
 
     private static void pipeline() {
 
-        System.out.println();
-        System.out.println("pc      if/id   id/exe  exe/mem mem/wb");
+        System.out.println("\npc      if/id   id/exe  exe/mem mem/wb");
         System.out.print(Globals.registerMap.get("pc") + "       ");    // Print PC First, it's Separate from Pipeline Registers
 
-        for (inst entry : Globals.pipelineList){
-            
+        for (inst entry : Globals.pipelineList)
             System.out.print(String.format("%-8s", entry.opcode));
-            // System.out.print(String.format("%-16s", entry));
-        }
 
         System.out.println("\n");
 
@@ -89,28 +85,42 @@ class interactive{
 
     private static void pipelineStep(inst f) {
 
-            inst wb, mem, ex, d;
+        inst wb, mem, ex, d;
 
-            wb  = Globals.pipelineList.get(3); 
-            mem = Globals.pipelineList.get(2);      
-            ex  = Globals.pipelineList.get(1);
-            d   = Globals.pipelineList.get(0);
+        wb  = Globals.pipelineList.get(3); 
+        mem = Globals.pipelineList.get(2);      
+        ex  = Globals.pipelineList.get(1);
+        d   = Globals.pipelineList.get(0);
 
-            Globals.Cycles += 1;    // increment Total Clock Cycles
+        Globals.Cycles += 1;    // increment Total Clock Cycles
 
-            wb.write_back();
-            mem.memory();
-            ex.execute();
+        wb.write_back();
+        mem.memory();
+        ex.execute();
             
-            // stall for lw
-            if((ex.opcode.equals("lw")) && 
-               ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt)))) {
-                Globals.pipelineList.add(1, new inst("stall", null, 0));
-            } else {
-                d.decode();
-                f.fetch();        // fetch the next instruction
-            }
+        d.decode();
+        System.out.println("d.wr: " + d.wr);
+        System.out.println("ex.wr: " + ex.wr);
+        if((ex.opcode.equals("lw")) && 
+           ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt))) &&
+           !ex.wr.equals(d.wr)) {
+            Globals.pipelineList.add(1, new inst("stall", null, 0));
+            Globals.Cycles += 1;    // increment Total Clock Cycles
+        } else {
+            d.decode();
+            f.fetch();        // fetch the next instruction
+        }
         
+    }
+
+    /* returns true if the pipeline is empty */
+    private static Boolean emptyCheck() {
+        for(inst i : Globals.pipelineList) {
+            if(!i.opcode.equals("empty"))
+                return false;
+        }
+
+        return true;
     }
 
     /* run step(s) */
@@ -128,13 +138,12 @@ class interactive{
         }
 
         /* run instructions (until end reached) */
-        // NOTE! Change the way loop is ended
         for(int i = 0; (i < numInst) && (pc != Globals.instList.size()); i++) {
             pipelineStep(Globals.instList.get(pc));
             pc = Globals.registerMap.get("pc");
         }
 
-        if(pc == Globals.instList.size()) {
+        if((pc == Globals.instList.size()) && !emptyCheck()) {
             pipelineStep(new inst("empty", null, 0));
         }
 
@@ -145,44 +154,27 @@ class interactive{
     /* prints CPI info */
     private static void programCompleteMsg(){
         
-        float CPI = Globals.Cycles / Globals.instList.size();
+        double CPI = (double)Globals.Cycles / Globals.Instructions;
         System.out.println("\nProgram complete");
-        System.out.print(String.format("CPI = " + "%-10f", CPI));
+        System.out.print(String.format("CPI = " + "%-10.3f", CPI));
         System.out.print(String.format("Cycles = " + "%-10s", Globals.Cycles));
-        System.out.println(String.format("Instructions = " + "%-10s\n", Globals.instList.size()));
+        System.out.println(String.format("Instructions = " + "%-10s\n", Globals.Instructions));
         
     }
 
     /* run until the program ends */
     private static void run() {
 
-        inst wb, mem, ex, d, f;
-
         int pc = Globals.registerMap.get("pc");
 
         while(pc != Globals.instList.size()) {
-            wb  = Globals.pipelineList.get(3); 
-            mem = Globals.pipelineList.get(2);      
-            ex  = Globals.pipelineList.get(1);
-            d   = Globals.pipelineList.get(0);
-            f   = Globals.instList.get(pc);
-
-            Globals.Cycles += 1;    // increment Total Clock Cycles
-
-            wb.write_back();
-            mem.memory();
-            ex.execute();
-            
-            if((ex.opcode.equals("lw")) && 
-               ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt)))) {
-                Globals.pipelineList.add(1, new inst("stall", null, 0));
-            } else {
-                d.decode();
-                f.fetch();        // fetch the next instruction
-            }
-
+            pipelineStep(Globals.instList.get(pc));
             pc = Globals.registerMap.get("pc");
         }
+
+        // run the remaining instructions in the pipeline
+        for(int i = 0; (i < 5) && !emptyCheck(); i++)
+            pipelineStep(new inst("empty", null, 0));
 
         programCompleteMsg();
     }
@@ -252,6 +244,7 @@ class interactive{
                 case 'r' : run();                               break;      // Run Until Completion
                 case 'm' : memory(userInput);                   break;      // Display Integer Memory Map
                 case 'c' : clear();                             break;      // Clear Registers, Memory, PC = 0
+                case 'i' : programCompleteMsg();                break;      // Display CPI and Instruction Info
             }
             System.out.print("mips> ");
             userInput = sc.nextLine();

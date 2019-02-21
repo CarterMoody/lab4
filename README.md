@@ -11,8 +11,7 @@
     - pipe registers (set them all back to empty)
     - CPI/cycles/instructions object (maybe???)
 
-# Other Goals
-- remove binary stuff
-
 # Questions
 - will the pipeline fill up with empty values?
+- does clearing registers also clear the pipeline?
+- what is squash?

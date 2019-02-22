@@ -94,20 +94,35 @@ class interactive{
         d   = Globals.pipelineList.get(0);
 
         wb.write_back();    
-        mem.memory();       
-        ex.execute();       
-        d.decode();         // decode before checking lw
-
-
-        // stall checks
-        if((ex.opcode.equals("lw")) && 
-          ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt))) &&
-           !ex.wr.equals(d.wr)) {
-            Globals.pipelineList.add(1, new inst("stall", null, 0));
-        } else if(d.opcode.matches("j|jr|jal")) {
+        mem.memory();
+        
+        if(mem.opcode.matches("bne|beq")) {
+            System.out.println(mem.ALUresult);
+        }
+        if(mem.opcode.matches("bne|beq") && (mem.ALUresult == 1)) {
+            // removes first three instructions
+            Globals.pipelineList.remove(0);
+            Globals.pipelineList.remove(0);
+            // replaces them with squash
+            Globals.pipelineList.add(0, new inst("squash", null, 0));
+            Globals.pipelineList.add(0, new inst("squash", null, 0));
             Globals.pipelineList.add(0, new inst("squash", null, 0));
         } else {
-            f.fetch();        // fetch the next instruction
+
+            ex.execute();       
+            d.decode();         // decode before checking lw
+
+
+            // stall checks
+            if((ex.opcode.equals("lw")) && 
+            ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt))) &&
+            !ex.wr.equals(d.wr)) {
+                Globals.pipelineList.add(1, new inst("stall", null, 0));
+            } else if(d.opcode.matches("j|jr|jal")) {
+                Globals.pipelineList.add(0, new inst("squash", null, 0));
+            } else {
+                f.fetch();        // fetch the next instruction
+            }
         }
 
         Globals.Cycles += 1;    // increment Total Clock Cycles
@@ -199,7 +214,7 @@ class interactive{
             System.out.println(PARSE_INT_ERROR);
         }
 
-        memEnd = memStart;
+        memEnd = memStart; // default value
 
         try {
             memEnd = Integer.parseInt(args[2]); 

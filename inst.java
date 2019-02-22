@@ -113,9 +113,9 @@ public class inst {
     private String binary;      // stores the binary form of opcode instruction
 
     /* instruction arguments */
-    public String rd;          // destination register for:    and, or, add, sub, slt, sll 
-    public String rs;          // source register for:         and, or, add, sub, slt, addi, beq, bne, jr
-    public String rt;          // source register for:         and, or, add, sub, slt, addi, beq, bne, lw, sw, sll
+    public String rd;           // destination register for:    and, or, add, sub, slt, sll 
+    public String rs;           // source register for:         and, or, add, sub, slt, addi, beq, bne, jr
+    public String rt;           // source register for:         and, or, add, sub, slt, addi, beq, bne, lw, sw, sll
     private String base;        // base register for:           lw, sw
     private int imm = 0;        // immediate integer for:       addi, beq, bne, lw (offset), sw (offset), sll (sa), j, jal
 
@@ -124,10 +124,9 @@ public class inst {
     private int r2 = 0;
 
     /* other pipeline */
-    private int ALUresult = 0;      // execute
+    public int ALUresult = 0;      // execute
     private int MEMresult = 0;      // memory
     public String wr;               // write_back
-    public Boolean squashFlag = false;
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;
@@ -319,8 +318,8 @@ public class inst {
             case "sub"  : this.ALUresult = this.r1 - this.r2;           break;
             case "sll"  : this.ALUresult = this.r1 << this.r2;          break;
             case "slt"  :                                          // continue
-            case "beq"  : this.ALUresult = (this.r1 < this.r2) ? 1 : 0; break;
-            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 1 : 0; break;
+            case "beq"  : this.ALUresult = (this.r1 == this.r2) ? 0 : 1; break;
+            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 0 : 1; break;
 
             // memory operations
             case "sw"   :

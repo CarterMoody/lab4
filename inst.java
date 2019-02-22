@@ -127,6 +127,7 @@ public class inst {
     private int ALUresult = 0;      // execute
     private int MEMresult = 0;      // memory
     public String wr;               // write_back
+    public Boolean squashFlag = false;
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;

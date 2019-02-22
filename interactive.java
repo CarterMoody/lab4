@@ -14,6 +14,7 @@ import java.lang.String;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Arrays;
 
 /* 
@@ -97,17 +98,16 @@ class interactive{
         ex.execute();       
         d.decode();         // decode before checking lw
 
+
+        // stall checks
         if((ex.opcode.equals("lw")) && 
           ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt))) &&
            !ex.wr.equals(d.wr)) {
             Globals.pipelineList.add(1, new inst("stall", null, 0));
+        } else if(d.opcode.matches("j|jr|jal")) {
+            Globals.pipelineList.add(0, new inst("squash", null, 0));
         } else {
-
-            if(d.opcode.matches("j|jr|jal") && !(d.opcode.equals("squash"))) {
-                Globals.pipelineList.add(0, new inst("squash", null, 0));
-            } else {
-                f.fetch();        // fetch the next instruction
-            }
+            f.fetch();        // fetch the next instruction
         }
 
         Globals.Cycles += 1;    // increment Total Clock Cycles
@@ -217,12 +217,28 @@ class interactive{
 
     }
 
-    /* clear all registers */
+    /* clear all registers and pipeline */
     private static void clear() {
         for (Map.Entry<String, Integer> entry : Globals.registerMap.entrySet()) {
             entry.setValue(0);
         }
         System.out.println("        Simulator reset\n");
+
+        // clear memory
+        Globals.memory = new int[Globals.MEMORY_SIZE];
+
+        // reset the pipeline
+        Globals.pipelineList = new LinkedList<inst>(Arrays.asList(
+            new inst("empty", null, 0),
+            new inst("empty", null, 0),
+            new inst("empty", null, 0),
+            new inst("empty", null, 0)
+        ));
+
+        // reset instruction stuff
+        Globals.Cycles = 0;
+        Globals.Instructions = 0;
+        
     }
 
     /* interactive mode */

@@ -96,10 +96,7 @@ class interactive{
         wb.write_back();    
         mem.memory();
         
-        if(mem.opcode.matches("bne|beq")) {
-            System.out.println(mem.ALUresult);
-        }
-        if(mem.opcode.matches("bne|beq") && (mem.ALUresult == 1)) {
+        if(mem.opcode.matches("bne|beq") && (mem.ALUresult == 0)) {
             // removes first three instructions
             Globals.pipelineList.remove(0);
             Globals.pipelineList.remove(0);

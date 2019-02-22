@@ -179,8 +179,8 @@ public class inst {
         
         // case_2: addi beq bne
         if(opcode.equals("addi") || opcode.equals("beq") || opcode.equals("bne")) {
-            this.rs = args[0];
-            this.rt = args[1];
+            this.rt = args[0];
+            this.rs = args[1];
             immediateConvert(args[2], false);
 
             this.binary = opcodeMap.get(this.opcode) + " " + 
@@ -297,8 +297,8 @@ public class inst {
         }
 
         // send branch address to Instruction Memory
-        if(this.opcode.matches("beq|bne") && (this.ALUresult == 1)) {
-            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm);
+        if(this.opcode.matches("beq|bne") && (this.ALUresult == 0)) {
+            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm - 2);
         }
 
     }
@@ -318,8 +318,8 @@ public class inst {
             case "sub"  : this.ALUresult = this.r1 - this.r2;           break;
             case "sll"  : this.ALUresult = this.r1 << this.r2;          break;
             case "slt"  :                                          // continue
-            case "beq"  : this.ALUresult = (this.r1 == this.r2) ? 0 : 1; break;
-            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 0 : 1; break;
+            case "beq"  : this.ALUresult = (this.r1 == this.r2) ? 1 : 0; break;
+            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 1 : 0; break;
 
             // memory operations
             case "sw"   :

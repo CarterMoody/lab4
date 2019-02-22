@@ -298,7 +298,7 @@ public class inst {
 
         // send branch address to Instruction Memory
         if(this.opcode.matches("beq|bne") && (this.ALUresult == 0)) {
-            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm - 2);
+            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm - 2); // why -2???
         }
 
     }
@@ -311,15 +311,15 @@ public class inst {
 
         // ALU arithmetic
         switch(this.opcode) {
-            case "and"  : this.ALUresult = this.r1 & this.r2;           break;
-            case "or"   : this.ALUresult = this.r1 | this.r2;           break;
-            case "add"  : this.ALUresult = this.r1 + this.r2;           break;
-            case "addi" : this.ALUresult = this.r1 + this.r2;           break;
-            case "sub"  : this.ALUresult = this.r1 - this.r2;           break;
-            case "sll"  : this.ALUresult = this.r1 << this.r2;          break;
-            case "slt"  :                                          // continue
-            case "beq"  : this.ALUresult = (this.r1 == this.r2) ? 1 : 0; break;
-            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 1 : 0; break;
+            case "and"  : this.ALUresult = this.r1 & this.r2;               break;
+            case "or"   : this.ALUresult = this.r1 | this.r2;               break;
+            case "add"  : this.ALUresult = this.r1 + this.r2;               break;
+            case "addi" : this.ALUresult = this.r1 + this.r2;               break;
+            case "sub"  : this.ALUresult = this.r1 - this.r2;               break;
+            case "sll"  : this.ALUresult = this.r1 << this.r2;              break;
+            case "slt"  : this.ALUresult = (this.r1 < this.r2) ? 1 : 0;     break;
+            case "beq"  : this.ALUresult = (this.r1 == this.r2) ? 1 : 0;    break;
+            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 1 : 0;    break;
 
             // memory operations
             case "sw"   :
@@ -341,18 +341,14 @@ public class inst {
 
         int PC = Globals.registerMap.get("pc");
 
-        if (this.opcode.equals("j")) {
+        if (this.opcode.matches("j|jal")) {
             Globals.registerMap.put("pc", this.imm);
         } 
 
         if(this.opcode.equals("jr")) {
             Globals.registerMap.put("pc", PC + this.r1);
         }
-
-        if(this.opcode.matches("jal")) {
-            Globals.registerMap.put("pc", PC + this.imm);
-        }
-        // end of Jumps
+        // end of jump instructions
 
         // immediate (addi | sll)
         if(this.opcode.matches("addi|sll")) {

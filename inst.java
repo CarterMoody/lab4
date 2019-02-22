@@ -124,9 +124,9 @@ public class inst {
     private int r2 = 0;
 
     /* other pipeline */
-    private int ALUresult = 0;  // execute
-    private int MEMresult = 0;  // memory
-    public String wr;           // write_back
+    private int ALUresult = 0;      // execute
+    private int MEMresult = 0;      // memory
+    public String wr;               // write_back
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;
@@ -268,8 +268,15 @@ public class inst {
             Globals.registerMap.put(this.wr, this.ALUresult);   // store write
         } 
 
+        // store content loaded from memory to write register
         if (this.opcode.equals("lw")) {
             Globals.registerMap.put(this.wr, this.MEMresult);
+        }
+
+        // jal store current address in $ra 
+        // (PC should already be incremented)
+        if(this.opcode.equals("jal")) {
+            Globals.registerMap.put(this.wr, Globals.registerMap.get("pc")); 
         }
 
         // remove instruction from pipeline
@@ -278,6 +285,7 @@ public class inst {
 
     /*
         - read/write from memory
+        - send branch address to Instruction Memory
     */
     public void memory() {
 
@@ -288,6 +296,11 @@ public class inst {
             break;
         }
 
+        // send branch address to Instruction Memory
+        if(this.opcode.matches("beq|bne") && (this.ALUresult == 1)) {
+            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm);
+        }
+
     }
 
     /*
@@ -295,11 +308,6 @@ public class inst {
         - ALU arithmetic 
     */
     public void execute() {
-
-        // Overwrite the PC (jump stuff)
-        switch(this.opcode) {
-            default : break;
-        }
 
         // ALU arithmetic
         switch(this.opcode) {
@@ -309,13 +317,16 @@ public class inst {
             case "addi" : this.ALUresult = this.r1 + this.r2;           break;
             case "sub"  : this.ALUresult = this.r1 - this.r2;           break;
             case "sll"  : this.ALUresult = this.r1 << this.r2;          break;
-            case "slt"  : this.ALUresult = (this.r1 < this.r2) ? 1 : 0; break;
+            case "slt"  :                                          // continue
+            case "beq"  : this.ALUresult = (this.r1 < this.r2) ? 1 : 0; break;
+            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 1 : 0; break;
 
             // memory operations
             case "sw"   :
             case "lw"   : this.ALUresult = this.r1 + this.imm;          break;            
         }
-        if (!this.opcode.matches("empty|stall")){
+
+        if (!this.opcode.matches("empty|stall|squash")){
             Globals.Instructions += 1;                                    
         }                        
         
@@ -325,6 +336,23 @@ public class inst {
         - get r1, r2, wr
     */
     public void decode() {
+
+        // Jumps (must do here for squash order)
+
+        int PC = Globals.registerMap.get("pc");
+
+        if (this.opcode.equals("j")) {
+            Globals.registerMap.put("pc", this.imm);
+        } 
+
+        if(this.opcode.equals("jr")) {
+            Globals.registerMap.put("pc", PC + this.r1);
+        }
+
+        if(this.opcode.matches("jal")) {
+            Globals.registerMap.put("pc", PC + this.imm);
+        }
+        // end of Jumps
 
         // immediate (addi | sll)
         if(this.opcode.matches("addi|sll")) {
@@ -345,6 +373,22 @@ public class inst {
             this.r1 = Globals.registerMap.get(this.base);
             this.r2 = Globals.registerMap.get(this.rt); // null if lw
             this.wr = this.rt;                          // null if sw
+        }
+
+        // branch operations
+        if(this.opcode.matches("beq|bne")) {
+            this.r1 = Globals.registerMap.get(this.rs);
+            this.r2 = Globals.registerMap.get(this.rt);
+        }
+
+        // jr register
+        if(this.opcode.matches("jr")) {
+            this.r1 = Globals.registerMap.get(this.rs);
+        }
+
+        // jal write register
+        if(this.opcode.equals("jal")) {
+            this.wr = this.rs;                          
         }
 
     }

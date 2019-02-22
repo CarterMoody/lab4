@@ -98,12 +98,16 @@ class interactive{
         d.decode();         // decode before checking lw
 
         if((ex.opcode.equals("lw")) && 
-           ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt))) &&
+          ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt))) &&
            !ex.wr.equals(d.wr)) {
             Globals.pipelineList.add(1, new inst("stall", null, 0));
         } else {
-            d.decode();
-            f.fetch();        // fetch the next instruction
+
+            if(d.opcode.matches("j|jr|jal") && !(d.opcode.equals("squash"))) {
+                Globals.pipelineList.add(0, new inst("squash", null, 0));
+            } else {
+                f.fetch();        // fetch the next instruction
+            }
         }
 
         Globals.Cycles += 1;    // increment Total Clock Cycles

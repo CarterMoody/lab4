@@ -300,7 +300,7 @@ public class inst {
 
         // send branch address to Instruction Memory
         if(this.opcode.matches("beq|bne") && (this.ALUresult == 1)) {
-            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm - 2); // why -2???
+            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm); // why -2???
         }
 
     }

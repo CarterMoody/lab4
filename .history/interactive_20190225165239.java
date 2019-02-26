@@ -86,8 +86,8 @@ class interactive{
 
     private static void pipelineStep(inst f) {
 
-       /* if (f.taken == false)
-            return; */
+        if (f.taken == false)
+            return;
 
         inst wb, mem, ex, d;
 

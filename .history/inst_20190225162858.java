@@ -299,7 +299,7 @@ public class inst {
         }
 
         // send branch address to Instruction Memory
-        if(this.opcode.matches("beq|bne") && (this.ALUresult == 1)) {
+        if(this.opcode.matches("beq|bne") && (this.ALUresult == 0)) {
             Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm - 2); // why -2???
         }
 

@@ -127,7 +127,6 @@ public class inst {
     public int ALUresult = 0;      // execute
     private int MEMresult = 0;      // memory
     public String wr;               // write_back
-    public boolean taken = true;
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;
@@ -262,7 +261,7 @@ public class inst {
         - write to register file
         - remove instruction from pipeline
     */ 
-    public void write_back(Boolean remove) {
+    public void write_back() {
 
         // write to register file
         if (this.opcode.matches("and|or|add|addi|sub|sll|slt")) {
@@ -281,8 +280,7 @@ public class inst {
         }
 
         // remove instruction from pipeline
-        if (remove)
-            Globals.pipelineList.remove(3);
+        Globals.pipelineList.remove(3);
     }
 
     /*

@@ -319,7 +319,7 @@ public class inst {
             case "addi" : this.ALUresult = this.r1 + this.r2;               break;
             case "sub"  : this.ALUresult = this.r1 - this.r2;               break;
             case "sll"  : this.ALUresult = this.r1 << this.r2;              break;
-            case "slt"  : this.ALUresult = (this.r1 < this.r2) ? 1 : 0;
+            case "slt"  : this.ALUresult = (this.r1 < this.r2) ? 0 : 1;
                             System.out.println("this.r1: " + this.r1);
                             System.out.println("this.rt: " + this.rt);
                             System.out.println("this.r2: " + this.r2);

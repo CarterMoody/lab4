@@ -127,7 +127,6 @@ public class inst {
     public int ALUresult = 0;      // execute
     private int MEMresult = 0;      // memory
     public String wr;               // write_back
-    public boolean taken = true;
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;
@@ -262,7 +261,7 @@ public class inst {
         - write to register file
         - remove instruction from pipeline
     */ 
-    public void write_back(Boolean remove) {
+    public void write_back() {
 
         // write to register file
         if (this.opcode.matches("and|or|add|addi|sub|sll|slt")) {
@@ -281,8 +280,7 @@ public class inst {
         }
 
         // remove instruction from pipeline
-        if (remove)
-            Globals.pipelineList.remove(3);
+        Globals.pipelineList.remove(3);
     }
 
     /*
@@ -319,13 +317,7 @@ public class inst {
             case "addi" : this.ALUresult = this.r1 + this.r2;               break;
             case "sub"  : this.ALUresult = this.r1 - this.r2;               break;
             case "sll"  : this.ALUresult = this.r1 << this.r2;              break;
-            case "slt"  : this.ALUresult = (this.r1 < this.r2) ? 1 : 0;
-                            System.out.println("this.r1: " + this.r1);
-                            System.out.println("this.rt: " + this.rt);
-                            System.out.println("this.r2: " + this.r2);
-                            if(this.ALUresult == 1)
-                                System.out.println("slt true");
-                            break;
+            case "slt"  : this.ALUresult = (this.r1 < this.r2) ? 1 : 0; System.out.print("slt true");    break;
             case "beq"  : this.ALUresult = (this.r1 == this.r2) ? 1 : 0;    break;
             case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 1 : 0;    break;
 

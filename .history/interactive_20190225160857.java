@@ -99,7 +99,7 @@ class interactive{
         if (f.opcode.matches("bne|beq")){
             // Push through all previous instructions
             // Last Instruction
-            mem.memory();
+            mem.meory();
             mem.write_back(false);
 
             // Second to Last

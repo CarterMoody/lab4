@@ -96,27 +96,22 @@ class interactive{
         wb.write_back(true);    
         mem.memory();
 
-        if (f.opcode.matches("bne|beq")){
+        if (d.opcode.matches("bne|beq")){
             // Push through all previous instructions
             // Last Instruction
-            mem.memory();
-            mem.write_back(false);
+            wb.write_back(false);
 
             // Second to Last
+            mem.memory();
+            wb.write_back(false);
+            
+            // Third to last
             ex.execute();
             ex.memory();
             ex.write_back(false);
-            
-            // Third to last
-            d.decode();
-            d.execute();
-            d.memory();
-            d.write_back(false);
-
-            
         }
         
-        if(mem.opcode.matches("bne|beq") && (mem.ALUresult == 0)) {
+        else if(mem.opcode.matches("bne|beq") && (mem.ALUresult == 0)) {
             // removes first three instructions
             Globals.pipelineList.remove(0);
             Globals.pipelineList.remove(0);

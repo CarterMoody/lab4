@@ -86,6 +86,11 @@ class interactive{
 
     private static void pipelineStep(inst f) {
 
+        if (!f.taken)
+            return;
+
+        
+
         inst wb, mem, ex, d;
 
         wb  = Globals.pipelineList.get(3); 
@@ -93,27 +98,11 @@ class interactive{
         ex  = Globals.pipelineList.get(1);
         d   = Globals.pipelineList.get(0);
 
-        wb.write_back(true);    
+        wb.write_back();    
         mem.memory();
 
-        if (f.opcode.matches("bne|beq")){
-            // Push through all previous instructions
-            // Last Instruction
-            mem.memory();
-            mem.write_back(false);
-
-            // Second to Last
+        if (mem.opcode.matches("bne|beq")){
             ex.execute();
-            ex.memory();
-            ex.write_back(false);
-            
-            // Third to last
-            d.decode();
-            d.execute();
-            d.memory();
-            d.write_back(false);
-
-            
         }
         
         if(mem.opcode.matches("bne|beq") && (mem.ALUresult == 0)) {

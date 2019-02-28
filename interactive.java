@@ -106,6 +106,7 @@ class interactive{
     private static void pipelineStep() {
 
         pipe wb = Globals.pipelineList.get(0);  
+        pipe mem = Globals.pipelineList.get(1);
         pipe ex = Globals.pipelineList.get(2);
         pipe d = Globals.pipelineList.get(3);
         pipe f = Globals.pipelineList.get(4);
@@ -114,13 +115,13 @@ class interactive{
             Globals.pipelineList.add(3, new pipe("stall", d.pc));
         }
 
-        if(d.threeSquash) {
-            Globals.pipelineList.pop();
-            Globals.pipelineList.pop();
-            Globals.pipelineList.pop();
-            Globals.pipelineList.add(0, new pipe("squash", d.pc));
-            Globals.pipelineList.add(0, new pipe("squash", d.pc));
-            Globals.pipelineList.add(0, new pipe("squash", d.pc));
+        if(mem.threeSquash) {
+            Globals.pipelineList.remove(2);
+            Globals.pipelineList.remove(2);
+            Globals.pipelineList.remove(2);
+            Globals.pipelineList.add(2, new pipe("squash", f.pc));
+            Globals.pipelineList.add(2, new pipe("squash", f.pc));
+            Globals.pipelineList.add(2, new pipe("squash", f.pc));
         }
 
         // if not at the end

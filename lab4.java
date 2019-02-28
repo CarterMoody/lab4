@@ -201,7 +201,7 @@ class lab4 {
             //interactive.dump();
 
             // set pipe pc properly
-            if(currentInst.opcode.matches("j|jal|jr")) {
+            if(currentInst.opcode.matches("j|jal|jr|beq|bne")) {
                 pipePC = pc + 1;
             } else {
                 pipePC = Globals.registerMap.get("pc");
@@ -224,7 +224,7 @@ class lab4 {
             }
 
             // squash flag
-            if(currentInst.opcode.equals("beq|bne") && currentInst.taken) {
+            if(currentInst.opcode.matches("beq|bne") && currentInst.taken) {
                 newPipe.threeSquash = true;
             }
 
@@ -239,9 +239,9 @@ class lab4 {
             if(newPipe.threeSquash) {
 
                 // add the next three instructions (to be squashed)
-                Globals.pipelineList.add(new pipe(Globals.instList.get(pc + 1).opcode, pc + 1));
-                Globals.pipelineList.add(new pipe(Globals.instList.get(pc + 2).opcode, pc + 2));
-                Globals.pipelineList.add(new pipe(Globals.instList.get(pc + 3).opcode, pc + 3));
+                Globals.pipelineList.add(new pipe(Globals.instList.get(pipePC + 1).opcode, pipePC + 1));
+                Globals.pipelineList.add(new pipe(Globals.instList.get(pipePC + 2).opcode, pipePC + 2));
+                Globals.pipelineList.add(new pipe(Globals.instList.get(pipePC + 3).opcode, pipePC + 3));
             }
 
         }

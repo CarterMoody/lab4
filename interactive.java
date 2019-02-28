@@ -74,23 +74,22 @@ class interactive{
 
     private static void pipeline() {
 
-        System.out.println("\npc      if/id   id/exe  exe/mem mem/wb");
+        int pc;
 
-        System.out.print(Globals.pipelineList.get(3).pc + "       ");
+        if(Globals.pipelineList.get(2).opcode.matches("j|jal|jr")) {
+            pc = Globals.pipelineList.get(4).pc - 1;
+        } else {
+            pc = Globals.pipelineList.get(3).pc;
+        }
+
+        System.out.println("\npc      if/id   id/exe  exe/mem mem/wb");
+        System.out.print(pc + "       ");
 
         for (int i = 3; i >= 0; --i) {
             System.out.print(String.format("%-8s", Globals.pipelineList.get(i).opcode));
         }
 
         System.out.println("\n");
-
-        /*
-        for(pipe p : Globals.pipelineList) {
-            System.out.print(p.opcode + ", ");
-        }
-
-        System.out.println("\n");
-        */
 
     }
 

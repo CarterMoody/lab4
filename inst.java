@@ -114,9 +114,9 @@ public class inst {
     private String binary;      // stores the binary form of opcode instruction
 
     /* instruction arguments */
-    public String rd;           // destination register for:    and, or, add, sub, slt, sll 
-    public String rs;           // source register for:         and, or, add, sub, slt, addi, beq, bne, jr
-    public String rt;           // source register for:         and, or, add, sub, slt, addi, beq, bne, lw, sw, sll
+    public String rd = "_";           // destination register for:    and, or, add, sub, slt, sll 
+    public String rs = "_";           // source register for:         and, or, add, sub, slt, addi, beq, bne, jr
+    public String rt = "_";           // source register for:         and, or, add, sub, slt, addi, beq, bne, lw, sw, sll
     private String base;        // base register for:           lw, sw
     private int imm = 0;        // immediate integer for:       addi, beq, bne, lw (offset), sw (offset), sll (sa), j, jal
 
@@ -311,6 +311,7 @@ public class inst {
         }
         
         Globals.registerMap.put("pc", PC + 1);  // increment PC
+
     }
 
     /* emulation methods */

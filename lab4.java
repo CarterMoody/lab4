@@ -21,9 +21,11 @@ class pipe {
     public String opcode;
     public Boolean squash = false;
     public Boolean stall = false;
+    public int pc = 0;
 
-    pipe(String opcode) {
+    pipe(String opcode, int pc) {
         this.opcode = opcode;
+        this.pc = pc;
     }
 }
 
@@ -70,10 +72,9 @@ class Globals {
 
     public static LinkedList<pipe> pipelineList = 
         new LinkedList<pipe>(Arrays.asList(
-            new pipe("empty"),
-            new pipe("empty"),
-            new pipe("empty"),
-            new pipe("empty")
+            new pipe("empty", 0),
+            new pipe("empty", 0),
+            new pipe("empty", 0)
         ));
         
     public static Map<String, Integer> labelMap = new HashMap<String, Integer>();
@@ -81,7 +82,7 @@ class Globals {
     public static int[] memory = new int[MEMORY_SIZE];
     public static ArrayList<inst> instList = new ArrayList<inst>();
 
-    public static int Cycles = 0;
+    public static int Cycles = -2;
     public static int Instructions = 0; // Used instead of 
 
 }
@@ -186,15 +187,34 @@ class lab4 {
     /* run until the program ends */
     public static void run() {
         int pc = Globals.registerMap.get("pc");
+        inst currentInst, nextInst;
+        pipe newPipe;
 
         while(pc != Globals.instList.size()) {
-            Globals.instList.get(pc).emulate_instruction(); // run instruction
-            Globals.pipelineList.add(new pipe(Globals.instList.get(pc).opcode));
+            
+            currentInst = Globals.instList.get(pc);
+            newPipe = new pipe(currentInst.opcode, pc);
+            
+            currentInst.emulate_instruction(); // run instruction
+            
+            // check for stall
+            if(currentInst.opcode.equals("lw")) {
+                nextInst = Globals.instList.get(pc + 1);
+
+                if((nextInst.rs.equals(currentInst.rt)) 
+                || (nextInst.rt.equals(currentInst.rt))) {
+                    newPipe.stall = true;
+                } 
+
+            }
+
+            Globals.pipelineList.add(newPipe);
             pc = Globals.registerMap.get("pc");
         }
 
+        // fill the end of the pipeline with empty vals
         for(int i = 0; i < 4; i++) {
-            Globals.pipelineList.add(new pipe("empty"));
+            Globals.pipelineList.add(new pipe("empty", pc));
         }
     }
 

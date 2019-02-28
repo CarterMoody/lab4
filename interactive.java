@@ -75,7 +75,13 @@ class interactive{
     private static void pipeline() {
 
         System.out.println("\npc      if/id   id/exe  exe/mem mem/wb");
-        System.out.print(Globals.registerMap.get("pc") + "       ");    // Print PC First, it's Separate from Pipeline Registers
+
+        // print the PC
+        if(Globals.pipelineList.size() > 4) {
+            System.out.print(Globals.pipelineList.get(4).pc + "       "); 
+        } else {
+            System.out.print(Globals.pipelineList.get(3).pc + "       "); 
+        }
 
         for (int i = 3; i >= 0; --i) {
             System.out.print(String.format("%-8s", Globals.pipelineList.get(i).opcode));
@@ -83,9 +89,34 @@ class interactive{
 
         System.out.println("\n");
 
+        /*
+        for(pipe p : Globals.pipelineList) {
+            System.out.print(p.opcode + ", ");
+        }
+
+        System.out.println("\n");
+        */
+
     }
 
-    private static void pipelineStep(inst f) {
+    private static void pipelineStep() {
+
+        pipe wb = Globals.pipelineList.get(0);       // writeback
+        pipe mem = Globals.pipelineList.get(2);
+
+        if(mem.stall) {
+            Globals.pipelineList.add(3, new pipe("stall", wb.pc));
+        }
+
+        // if not at the end
+        if(Globals.pipelineList.size() > 4) {
+
+            Globals.pipelineList.pop();
+            Globals.Cycles += 1;
+
+            if(!wb.opcode.matches("stall|empty"))
+                Globals.Instructions += 1;
+        }
 
         /*
         inst wb, mem, ex, d;
@@ -130,20 +161,9 @@ class interactive{
         
     }
 
-    /* returns true if the pipeline is empty */
-    private static Boolean emptyCheck() {
-        for(pipe p : Globals.pipelineList) {
-            if(!p.opcode.equals("empty"))
-                return false;
-        }
-
-        return true;
-    }
-
     /* run step(s) */
     private static void stepClock(String userInput) {
         
-        /*
         int pc = Globals.registerMap.get("pc");
         int numInst = 1;
         String args[] = userInput.split(" ");
@@ -167,10 +187,13 @@ class interactive{
         }
         */
 
-        if(Globals.pipelineList.size() > 4)
-            Globals.pipelineList.pop();
+        // System.out.println(mem.stall);
+        // System.out.println(mem.opcode);
 
-        pipeline();
+        // check for stalls
+
+        pipeline();     // print the pipeline
+        pipelineStep();
 
     }
 
@@ -190,14 +213,9 @@ class interactive{
 
         int pc = Globals.registerMap.get("pc");
 
-        while(pc != Globals.instList.size()) {
-            pipelineStep(Globals.instList.get(pc));
-            pc = Globals.registerMap.get("pc");
+        while(Globals.pipelineList.size() > 4) {
+            pipelineStep();
         }
-
-        // run the remaining instructions in the pipeline
-        for(int i = 0; (i < 5) && !emptyCheck(); i++)
-            pipelineStep(new inst("empty", null, 0));
 
         programCompleteMsg();
     }
@@ -251,10 +269,9 @@ class interactive{
 
         // reset the pipeline
         Globals.pipelineList = new LinkedList<pipe>(Arrays.asList(
-            new pipe("empty"),
-            new pipe("empty"),
-            new pipe("empty"),
-            new pipe("empty")
+            new pipe("empty", 0),
+            new pipe("empty", 0),
+            new pipe("empty", 0)
         ));
 
         // reset instruction stuff

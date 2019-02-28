@@ -109,6 +109,7 @@ public class inst {
     }};
     
     public String opcode = "empty";
+    public String opType;
     private int lineNo;         // position of opcode in the assembly file
     private String binary;      // stores the binary form of opcode instruction
 
@@ -119,14 +120,11 @@ public class inst {
     private String base;        // base register for:           lw, sw
     private int imm = 0;        // immediate integer for:       addi, beq, bne, lw (offset), sw (offset), sll (sa), j, jal
 
-    /* register file */
-    private int r1 = 0;
-    private int r2 = 0;
-
     /* other pipeline */
     public int ALUresult = 0;      // execute
     private int MEMresult = 0;      // memory
     public String wr;               // write_back
+    public Boolean taken = true;
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;
@@ -175,6 +173,8 @@ public class inst {
             registerMap.get(this.rd) + 
             " 00000 " + opcodeMap.get(this.opcode);
 
+            this.opType = "RD";
+
         } 
         
         // case_2: addi beq bne
@@ -187,6 +187,8 @@ public class inst {
             registerMap.get(this.rs) + " " +
             registerMap.get(this.rt) + " " + 
             immediateBinary(16);
+
+            this.opType = (this.opcode.equals("addi")) ? "RD" : "PC"; 
 
         } 
         
@@ -203,6 +205,8 @@ public class inst {
             registerMap.get(this.rt) + " " +
             immediateBinary(16);
 
+            this.opType = "MEM";
+
         } 
         
         // case_4: sll
@@ -218,6 +222,8 @@ public class inst {
             immediateBinary(5) + " " +
             opcodeMap.get(this.opcode);
 
+            this.opType = "RD";
+
         } 
         
         // case_5: j jal
@@ -227,6 +233,8 @@ public class inst {
 
             this.binary = opcodeMap.get(this.opcode) + " " +
             immediateBinary(26);
+
+            this.opType = "PC";
         } 
         
         // case_6: jr
@@ -238,6 +246,8 @@ public class inst {
             registerMap.get(this.rs) + 
             " 000000000000000 " +
             opcodeMap.get(this.opcode);
+
+            this.opType = "PC";
 
         }
 
@@ -255,153 +265,95 @@ public class inst {
         System.out.println(this.binary);
     }
 
-    /* opcode logic */
+    /* emulation logic */
 
-    /*
-        - write to register file
-        - remove instruction from pipeline
-    */ 
-    public void write_back() {
-
-        // write to register file
-        if (this.opcode.matches("and|or|add|addi|sub|sll|slt")) {
-            Globals.registerMap.put(this.wr, this.ALUresult);   // store write
-        } 
-
-        // store content loaded from memory to write register
-        if (this.opcode.equals("lw")) {
-            Globals.registerMap.put(this.wr, this.MEMresult);
-        }
-
-        // jal store current address in $ra 
-        // (PC should already be incremented)
-        if(this.opcode.equals("jal")) {
-            Globals.registerMap.put(this.wr, Globals.registerMap.get("pc")); 
-        }
-
-        // remove instruction from pipeline
-        Globals.pipelineList.remove(3);
-    }
-
-    /*
-        - read/write from memory
-        - send branch address to Instruction Memory
-    */
-    public void memory() {
-
-        switch(this.opcode) {
-            case "lw"   : this.MEMresult = Globals.memory[this.ALUresult];
-            break;
-            case "sw"   : Globals.memory[this.r1 + imm] = this.r2;
-            break;
-        }
-
-        // send branch address to Instruction Memory
-        if(this.opcode.matches("beq|bne") && (this.ALUresult == 0)) {
-            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm - 2); // why -2???
-        }
-
-    }
-
-    /*
-        - overwrite the PC (jump/break)
-        - ALU arithmetic 
-    */
-    public void execute() {
-
-        // ALU arithmetic
-        switch(this.opcode) {
-            case "and"  : this.ALUresult = this.r1 & this.r2;               break;
-            case "or"   : this.ALUresult = this.r1 | this.r2;               break;
-            case "add"  : this.ALUresult = this.r1 + this.r2;               break;
-            case "addi" : this.ALUresult = this.r1 + this.r2;               break;
-            case "sub"  : this.ALUresult = this.r1 - this.r2;               break;
-            case "sll"  : this.ALUresult = this.r1 << this.r2;              break;
-            case "slt"  : this.ALUresult = (this.r1 < this.r2) ? 1 : 0;     break;
-            case "beq"  : this.ALUresult = (this.r1 == this.r2) ? 1 : 0;    break;
-            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 1 : 0;    break;
-
-            // memory operations
-            case "sw"   :
-            case "lw"   : this.ALUresult = this.r1 + this.imm;          break;            
-        }
-
-        if (!this.opcode.matches("empty|stall|squash")){
-            Globals.Instructions += 1;                                    
-        }                        
-        
-    }
-
-    /*
-        - get r1, r2, wr
-    */
-    public void decode() {
-
-        // Jumps (must do here for squash order)
+    private void RDop() {
 
         int PC = Globals.registerMap.get("pc");
+        int rs = Globals.registerMap.get(this.rs);
+        int rt = Globals.registerMap.get(this.rt);
+        int rd = 0;
 
-        if (this.opcode.matches("j|jal")) {
-            Globals.registerMap.put("pc", this.imm);
-        } 
-
-        if(this.opcode.equals("jr")) {
-            Globals.registerMap.put("pc", PC + this.r1);
+        switch(this.opcode) {
+            case "and"  : rd = rs & rt;             break;
+            case "or"   : rd = rs | rt;             break;
+            case "add"  : rd = rs + rt;             break;
+            case "addi" : rs = rt + imm;            break;
+            case "sub"  : rd = rs - rt;             break;
+            case "sll"  : rd = rt << this.imm;      break;
+            case "slt"  : rd = (rs < rt) ? 1 : 0;   break;
         }
-        // end of jump instructions
-
-        // immediate (addi | sll)
-        if(this.opcode.matches("addi|sll")) {
-            this.r1 = Globals.registerMap.get(this.rt);
-            this.r2 = this.imm;
-            this.wr = (this.opcode.equals("addi")) ? this.rt : this.rd; 
+        
+        if (this.opcode.equals("addi")) {
+            Globals.registerMap.put(this.rs, rs);   // store rd
+        } else {
+            Globals.registerMap.put(this.rd, rd);   // store rd
         }
-
-        // non-immediate (and | or | add | sub | slt)
-        if(this.opcode.matches("and|or|add|sub|slt")) {
-            this.r1 = Globals.registerMap.get(this.rs);
-            this.r2 = Globals.registerMap.get(this.rt);
-            this.wr = this.rd;
-        }
-
-        // memory operations
-        if(this.opcode.matches("lw|sw")) {
-            this.r1 = Globals.registerMap.get(this.base);
-            this.r2 = Globals.registerMap.get(this.rt); // null if lw
-            this.wr = this.rt;                          // null if sw
-        }
-
-        // branch operations
-        if(this.opcode.matches("beq|bne")) {
-            this.r1 = Globals.registerMap.get(this.rs);
-            this.r2 = Globals.registerMap.get(this.rt);
-        }
-
-        // jr register
-        if(this.opcode.matches("jr")) {
-            this.r1 = Globals.registerMap.get(this.rs);
-        }
-
-        // jal write register
-        if(this.opcode.equals("jal")) {
-            this.wr = this.rs;                          
-        }
+        
+        Globals.registerMap.put("pc", PC + 1);      // increment PC
 
     }
 
-    /*
-        - add instruction to pipeline
-        - increment PC
+    /* 
+        lw, sw 
+        - memory operations
+        - note: imm in this case is base
     */
-    public void fetch() {
-        // add instruction to pipelineList
-        Globals.pipelineList.add(0, this);
+    private void MEMop() {
+        int PC = Globals.registerMap.get("pc");
+        int base = Globals.registerMap.get(this.base);
 
-        // increment PC (if not at the end)
-        if(!this.opcode.matches("empty|stall")) {
-            Globals.registerMap.put("pc", Globals.registerMap.get("pc") + 1);
+        switch(this.opcode) {
+            case "lw"   : Globals.registerMap.put(this.rt, Globals.memory[base + imm]);
+            break;
+            case "sw"   : Globals.memory[base + imm] = Globals.registerMap.get(this.rt);
+            break;
         }
         
+        Globals.registerMap.put("pc", PC + 1);  // increment PC
+    }
+
+    /* emulation methods */
+
+    /* 
+        beq, bne, jal, j, jr
+        - operations that change the PC 
+    */
+    private void PCop() {
+        int PC = Globals.registerMap.get("pc");
+        int rs = 0;
+        int rt = 0;
+        int offset = 0;
+
+        // make this less messy
+        if(!(this.opcode.equals("j") || this.opcode.equals("jal"))) {
+            if(!this.opcode.equals("jr"))
+                rt = Globals.registerMap.get(this.rt);
+            rs = Globals.registerMap.get(this.rs);
+        }
+
+        switch(this.opcode) {
+            case "beq"  : offset = (rs == rt) ? (this.imm + 1) : 1;     break;
+            case "bne"  : offset = (rs != rt) ? (this.imm + 1) : 1;     break;
+            case "jal"  : Globals.registerMap.put("$ra", PC + 1);   // continue
+            case "j"    : offset = this.imm;                            break;
+            case "jr"   : offset = rs;                                  break; 
+        }   
+
+        if(this.opcode.charAt(0) == 'j') {
+            Globals.registerMap.put("pc", offset);  // increment PC
+        } else {
+            Globals.registerMap.put("pc", PC + offset);  // increment PC
+        }
+    }
+
+    /* run emulation of object */
+    public void emulate_instruction() {
+        switch(this.opType) {
+            case "RD"   : RDop();   break; 
+            case "MEM"  : MEMop();  break;
+            case "PC"   : PCop();   break;
+        }
     }
 
 }

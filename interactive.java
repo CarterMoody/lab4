@@ -77,8 +77,12 @@ class interactive{
         System.out.println("\npc      if/id   id/exe  exe/mem mem/wb");
         System.out.print(Globals.registerMap.get("pc") + "       ");    // Print PC First, it's Separate from Pipeline Registers
 
-        for (inst entry : Globals.pipelineList)
-            System.out.print(String.format("%-8s", entry.opcode));
+        for (int i = 0; i < 4; i++) {
+            System.out.print(String.format("%-8s", Globals.pipelineList.get(i).opcode));
+        }
+
+        if(Globals.pipelineList.size() > 4)
+            Globals.pipelineList.pop();
 
         System.out.println("\n");
 
@@ -86,6 +90,7 @@ class interactive{
 
     private static void pipelineStep(inst f) {
 
+        /*
         inst wb, mem, ex, d;
 
         wb  = Globals.pipelineList.get(3); 
@@ -93,10 +98,11 @@ class interactive{
         ex  = Globals.pipelineList.get(1);
         d   = Globals.pipelineList.get(0);
 
-        wb.write_back();    
-        mem.memory();
-        
-        if(mem.opcode.matches("bne|beq") && (mem.ALUresult == 0)) {
+        f.emulate();
+        //wb.write_back(true);    
+        //mem.memory();
+
+        if(mem.opcode.matches("bne|beq") && mem.ALUresult == 0) {
             // removes first three instructions
             Globals.pipelineList.remove(0);
             Globals.pipelineList.remove(0);
@@ -123,13 +129,14 @@ class interactive{
         }
 
         Globals.Cycles += 1;    // increment Total Clock Cycles
+        */
         
     }
 
     /* returns true if the pipeline is empty */
     private static Boolean emptyCheck() {
-        for(inst i : Globals.pipelineList) {
-            if(!i.opcode.equals("empty"))
+        for(pipe p : Globals.pipelineList) {
+            if(!p.opcode.equals("empty"))
                 return false;
         }
 
@@ -138,6 +145,8 @@ class interactive{
 
     /* run step(s) */
     private static void stepClock(String userInput) {
+        
+        /*
         int pc = Globals.registerMap.get("pc");
         int numInst = 1;
         String args[] = userInput.split(" ");
@@ -150,7 +159,7 @@ class interactive{
             }
         }
 
-        /* run instructions (until end reached) */
+        /* run instructions (until end reached) 
         for(int i = 0; (i < numInst) && (!emptyCheck() || (pc == 0)); i++) {
             if((pc == Globals.instList.size())) {
                 pipelineStep(new inst("empty", null, 0));
@@ -159,6 +168,7 @@ class interactive{
                 pc = Globals.registerMap.get("pc");
             }
         }
+        */
 
         pipeline();
 
@@ -240,16 +250,19 @@ class interactive{
         Globals.memory = new int[Globals.MEMORY_SIZE];
 
         // reset the pipeline
-        Globals.pipelineList = new LinkedList<inst>(Arrays.asList(
-            new inst("empty", null, 0),
-            new inst("empty", null, 0),
-            new inst("empty", null, 0),
-            new inst("empty", null, 0)
+        Globals.pipelineList = new LinkedList<pipe>(Arrays.asList(
+            new pipe("empty"),
+            new pipe("empty"),
+            new pipe("empty"),
+            new pipe("empty")
         ));
 
         // reset instruction stuff
         Globals.Cycles = 0;
         Globals.Instructions = 0;
+
+        // run everything (emulation)
+        lab4.run();
         
     }
 

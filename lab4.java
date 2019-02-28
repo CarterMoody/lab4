@@ -17,6 +17,16 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Arrays;
 
+class pipe {
+    public String opcode;
+    public Boolean squash = false;
+    public Boolean stall = false;
+
+    pipe(String opcode) {
+        this.opcode = opcode;
+    }
+}
+
 class Globals {
     /* Constants */
 
@@ -58,12 +68,12 @@ class Globals {
         
     }};
 
-    public static LinkedList<inst> pipelineList = 
-        new LinkedList<inst>(Arrays.asList(
-            new inst("empty", null, 0),
-            new inst("empty", null, 0),
-            new inst("empty", null, 0),
-            new inst("empty", null, 0)
+    public static LinkedList<pipe> pipelineList = 
+        new LinkedList<pipe>(Arrays.asList(
+            new pipe("empty"),
+            new pipe("empty"),
+            new pipe("empty"),
+            new pipe("empty")
         ));
         
     public static Map<String, Integer> labelMap = new HashMap<String, Integer>();
@@ -173,6 +183,21 @@ class lab4 {
         }
     }
 
+    /* run until the program ends */
+    public static void run() {
+        int pc = Globals.registerMap.get("pc");
+
+        while(pc != Globals.instList.size()) {
+            Globals.instList.get(pc).emulate_instruction(); // run instruction
+            Globals.pipelineList.add(new pipe(Globals.instList.get(pc).opcode));
+            pc = Globals.registerMap.get("pc");
+        }
+
+        for(int i = 0; i < 4; i++) {
+            Globals.pipelineList.add(new pipe("empty"));
+        }
+    }
+
     public static void main(String args[]) throws IOException, IllegalArgumentException {
 
         if(!(args.length == 1 || args.length == 2)) {
@@ -180,6 +205,8 @@ class lab4 {
         }
 
         read_asm(args[0]);      // build instruction objects
+
+        run();                  // emulate instructions, build pipeline
 
         /* select mode */
         if (args.length == 2){

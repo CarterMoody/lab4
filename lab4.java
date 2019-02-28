@@ -19,7 +19,8 @@ import java.util.Arrays;
 
 class pipe {
     public String opcode;
-    public Boolean squash = false;
+    public Boolean oneSquash = false;
+    public Boolean threeSquash = false;
     public Boolean stall = false;
     public int pc = 0;
 
@@ -82,8 +83,9 @@ class Globals {
     public static int[] memory = new int[MEMORY_SIZE];
     public static ArrayList<inst> instList = new ArrayList<inst>();
 
-    public static int Cycles = -2;
+    public static int Cycles = 0;
     public static int Instructions = 0; // Used instead of 
+    public static int pipePC = 0;
 
 }
 
@@ -193,13 +195,21 @@ class lab4 {
         while(pc != Globals.instList.size()) {
             
             currentInst = Globals.instList.get(pc);
-            newPipe = new pipe(currentInst.opcode, pc);
-            
+
             currentInst.emulate_instruction(); // run instruction
             
+            // set pc properly
+            if(currentInst.opcode.matches("j|jal|jr")) {
+                pc += 1;
+            } else {
+                pc = Globals.registerMap.get("pc");
+            }
+            
+            newPipe = new pipe(currentInst.opcode, pc);
+
             // check for stall
             if(currentInst.opcode.equals("lw")) {
-                nextInst = Globals.instList.get(pc + 1);
+                nextInst = Globals.instList.get(pc);
 
                 if((nextInst.rs.equals(currentInst.rt)) 
                 || (nextInst.rt.equals(currentInst.rt))) {
@@ -208,8 +218,14 @@ class lab4 {
 
             }
 
+            // check for beq/bne
+
             Globals.pipelineList.add(newPipe);
-            pc = Globals.registerMap.get("pc");
+
+            // check for jumps
+            if(currentInst.opcode.matches("j|jal|jr")) {
+                Globals.pipelineList.add(new pipe("squash", pc + 1));
+            }
         }
 
         // fill the end of the pipeline with empty vals

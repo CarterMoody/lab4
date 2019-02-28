@@ -76,12 +76,7 @@ class interactive{
 
         System.out.println("\npc      if/id   id/exe  exe/mem mem/wb");
 
-        // print the PC
-        if(Globals.pipelineList.size() > 4) {
-            System.out.print(Globals.pipelineList.get(4).pc + "       "); 
-        } else {
-            System.out.print(Globals.pipelineList.get(3).pc + "       "); 
-        }
+        System.out.print(Globals.pipelineList.get(3).pc + "       ");
 
         for (int i = 3; i >= 0; --i) {
             System.out.print(String.format("%-8s", Globals.pipelineList.get(i).opcode));
@@ -99,13 +94,23 @@ class interactive{
 
     }
 
+    private static void printFullPipe() {
+        for(pipe p : Globals.pipelineList) {
+            System.out.print(p.opcode + ", ");
+            System.out.println(p.pc);
+        }
+
+        System.out.println("\n");
+    }
+
     private static void pipelineStep() {
 
-        pipe wb = Globals.pipelineList.get(0);       // writeback
-        pipe mem = Globals.pipelineList.get(2);
+        pipe wb = Globals.pipelineList.get(0);  
+        pipe ex = Globals.pipelineList.get(2);
+        pipe d = Globals.pipelineList.get(3);
 
-        if(mem.stall) {
-            Globals.pipelineList.add(3, new pipe("stall", wb.pc));
+        if(ex.stall) {
+            Globals.pipelineList.add(3, new pipe("stall", d.pc));
         }
 
         // if not at the end
@@ -114,7 +119,7 @@ class interactive{
             Globals.pipelineList.pop();
             Globals.Cycles += 1;
 
-            if(!wb.opcode.matches("stall|empty"))
+            if(!wb.opcode.matches("squash|stall|empty"))
                 Globals.Instructions += 1;
         }
 

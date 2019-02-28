@@ -77,12 +77,9 @@ class interactive{
         System.out.println("\npc      if/id   id/exe  exe/mem mem/wb");
         System.out.print(Globals.registerMap.get("pc") + "       ");    // Print PC First, it's Separate from Pipeline Registers
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 3; i >= 0; --i) {
             System.out.print(String.format("%-8s", Globals.pipelineList.get(i).opcode));
         }
-
-        if(Globals.pipelineList.size() > 4)
-            Globals.pipelineList.pop();
 
         System.out.println("\n");
 
@@ -169,6 +166,9 @@ class interactive{
             }
         }
         */
+
+        if(Globals.pipelineList.size() > 4)
+            Globals.pipelineList.pop();
 
         pipeline();
 

@@ -97,7 +97,8 @@ class interactive{
     private static void printFullPipe() {
         for(pipe p : Globals.pipelineList) {
             System.out.print(p.opcode + ", ");
-            System.out.println(p.pc);
+            System.out.print(p.pc + ", ");
+            System.out.println(p.stall);
         }
 
         System.out.println("\n");
@@ -111,7 +112,7 @@ class interactive{
         pipe d = Globals.pipelineList.get(3);
         pipe f = Globals.pipelineList.get(4);
 
-        if(wb.stall) {
+        if(ex.stall) {
             Globals.pipelineList.add(3, new pipe("stall", d.pc));
         }
 

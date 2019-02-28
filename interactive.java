@@ -48,7 +48,7 @@ class interactive{
     private static final String MEM_ARGS_ERROR  = "        Invalid amount of arguments (use: m num1 num2)";
 
     /* print registers */
-    private static void dump() {
+    public static void dump() {
 
         int i = 0;
 
@@ -74,70 +74,71 @@ class interactive{
 
     private static void pipeline() {
 
-        System.out.println("\npc      if/id   id/exe  exe/mem mem/wb");
-        System.out.print(Globals.registerMap.get("pc") + "       ");    // Print PC First, it's Separate from Pipeline Registers
+        int pc;
 
-        for (inst entry : Globals.pipelineList)
-            System.out.print(String.format("%-8s", entry.opcode));
+        if(Globals.pipelineList.get(2).opcode.matches("j|jal|jr")) {
+            pc = Globals.pipelineList.get(4).pc - 1;
+        } else {
+            pc = Globals.pipelineList.get(3).pc;
+        }
+
+        System.out.println("\npc      if/id   id/exe  exe/mem mem/wb");
+        System.out.print(pc + "       ");
+
+        for (int i = 3; i >= 0; --i) {
+            System.out.print(String.format("%-8s", Globals.pipelineList.get(i).opcode));
+        }
 
         System.out.println("\n");
 
     }
 
-    private static void pipelineStep(inst f) {
-
-        inst wb, mem, ex, d;
-
-        wb  = Globals.pipelineList.get(3); 
-        mem = Globals.pipelineList.get(2);      
-        ex  = Globals.pipelineList.get(1);
-        d   = Globals.pipelineList.get(0);
-
-        wb.write_back();    
-        mem.memory();
-        
-        if(mem.opcode.matches("bne|beq") && (mem.ALUresult == 0)) {
-            // removes first three instructions
-            Globals.pipelineList.remove(0);
-            Globals.pipelineList.remove(0);
-            // replaces them with squash
-            Globals.pipelineList.add(0, new inst("squash", null, 0));
-            Globals.pipelineList.add(0, new inst("squash", null, 0));
-            Globals.pipelineList.add(0, new inst("squash", null, 0));
-        } else {
-
-            ex.execute();       
-            d.decode();         // decode before checking lw
-
-
-            // stall checks
-            if((ex.opcode.equals("lw")) && 
-            ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt))) &&
-            !ex.wr.equals(d.wr)) {
-                Globals.pipelineList.add(1, new inst("stall", null, 0));
-            } else if(d.opcode.matches("j|jr|jal")) {
-                Globals.pipelineList.add(0, new inst("squash", null, 0));
-            } else {
-                f.fetch();        // fetch the next instruction
-            }
+    private static void printFullPipe() {
+        for(pipe p : Globals.pipelineList) {
+            System.out.print(p.opcode + ", ");
+            System.out.print(p.pc + ", ");
+            System.out.println(p.stall);
         }
 
-        Globals.Cycles += 1;    // increment Total Clock Cycles
-        
+        System.out.println("\n");
     }
 
-    /* returns true if the pipeline is empty */
-    private static Boolean emptyCheck() {
-        for(inst i : Globals.pipelineList) {
-            if(!i.opcode.equals("empty"))
-                return false;
+    private static void pipelineStep() {
+
+        pipe wb = Globals.pipelineList.get(0);  
+        pipe mem = Globals.pipelineList.get(1);
+        pipe ex = Globals.pipelineList.get(2);
+        pipe d = Globals.pipelineList.get(3);
+        pipe f = Globals.pipelineList.get(4);
+
+        if(ex.stall) {
+            Globals.pipelineList.add(3, new pipe("stall", d.pc));
         }
 
-        return true;
+        if(mem.threeSquash) {
+            Globals.pipelineList.remove(2);
+            Globals.pipelineList.remove(2);
+            Globals.pipelineList.remove(2);
+            Globals.pipelineList.add(2, new pipe("squash", f.pc));
+            Globals.pipelineList.add(2, new pipe("squash", f.pc));
+            Globals.pipelineList.add(2, new pipe("squash", f.pc));
+        }
+
+        // if not at the end
+        if(Globals.pipelineList.size() > 4) {
+
+            Globals.pipelineList.pop();
+            Globals.Cycles += 1;
+
+            if(!wb.opcode.matches("squash|stall|empty"))
+                Globals.Instructions += 1;
+        }
+
     }
 
     /* run step(s) */
     private static void stepClock(String userInput) {
+        
         int pc = Globals.registerMap.get("pc");
         int numInst = 1;
         String args[] = userInput.split(" ");
@@ -150,7 +151,7 @@ class interactive{
             }
         }
 
-        /* run instructions (until end reached) */
+        /* run instructions (until end reached) 
         for(int i = 0; (i < numInst) && (!emptyCheck() || (pc == 0)); i++) {
             if((pc == Globals.instList.size())) {
                 pipelineStep(new inst("empty", null, 0));
@@ -159,8 +160,15 @@ class interactive{
                 pc = Globals.registerMap.get("pc");
             }
         }
+        */
 
-        pipeline();
+        // System.out.println(mem.stall);
+        // System.out.println(mem.opcode);
+
+        // check for stalls
+
+        pipeline();     // print the pipeline
+        pipelineStep();
 
     }
 
@@ -178,16 +186,9 @@ class interactive{
     /* run until the program ends */
     private static void run() {
 
-        int pc = Globals.registerMap.get("pc");
-
-        while(pc != Globals.instList.size()) {
-            pipelineStep(Globals.instList.get(pc));
-            pc = Globals.registerMap.get("pc");
+        while(Globals.pipelineList.size() > 4) {
+            pipelineStep();
         }
-
-        // run the remaining instructions in the pipeline
-        for(int i = 0; (i < 5) && !emptyCheck(); i++)
-            pipelineStep(new inst("empty", null, 0));
 
         programCompleteMsg();
     }
@@ -240,16 +241,18 @@ class interactive{
         Globals.memory = new int[Globals.MEMORY_SIZE];
 
         // reset the pipeline
-        Globals.pipelineList = new LinkedList<inst>(Arrays.asList(
-            new inst("empty", null, 0),
-            new inst("empty", null, 0),
-            new inst("empty", null, 0),
-            new inst("empty", null, 0)
+        Globals.pipelineList = new LinkedList<pipe>(Arrays.asList(
+            new pipe("empty", 0),
+            new pipe("empty", 0),
+            new pipe("empty", 0)
         ));
 
         // reset instruction stuff
         Globals.Cycles = 0;
         Globals.Instructions = 0;
+
+        // run everything (emulation)
+        lab4.run();
         
     }
 

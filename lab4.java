@@ -17,6 +17,19 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Arrays;
 
+class pipe {
+    public String opcode;
+    public Boolean oneSquash = false;
+    public Boolean threeSquash = false;
+    public Boolean stall = false;
+    public int pc = 0;
+
+    pipe(String opcode, int pc) {
+        this.opcode = opcode;
+        this.pc = pc;
+    }
+}
+
 class Globals {
     /* Constants */
 
@@ -58,12 +71,11 @@ class Globals {
         
     }};
 
-    public static LinkedList<inst> pipelineList = 
-        new LinkedList<inst>(Arrays.asList(
-            new inst("empty", null, 0),
-            new inst("empty", null, 0),
-            new inst("empty", null, 0),
-            new inst("empty", null, 0)
+    public static LinkedList<pipe> pipelineList = 
+        new LinkedList<pipe>(Arrays.asList(
+            new pipe("empty", 0),
+            new pipe("empty", 0),
+            new pipe("empty", 0)
         ));
         
     public static Map<String, Integer> labelMap = new HashMap<String, Integer>();
@@ -71,8 +83,9 @@ class Globals {
     public static int[] memory = new int[MEMORY_SIZE];
     public static ArrayList<inst> instList = new ArrayList<inst>();
 
-    public static int Cycles = 0;
+    public static int Cycles = 1;
     public static int Instructions = 0; // Used instead of 
+    public static int pipePC = 0;
 
 }
 
@@ -173,6 +186,72 @@ class lab4 {
         }
     }
 
+    /* run until the program ends */
+    public static void run() {
+        int pc = Globals.registerMap.get("pc");
+        int pipePC;
+        inst currentInst, nextInst;
+        pipe newPipe;
+
+        while(pc != Globals.instList.size()) {
+            
+            currentInst = Globals.instList.get(pc);
+
+            currentInst.emulate_instruction(); // run instruction
+            //interactive.dump();
+
+            // set pipe pc properly
+            if(currentInst.opcode.matches("j|jal|jr|beq|bne")) {
+                pipePC = pc + 1;
+            } else {
+                pipePC = Globals.registerMap.get("pc");
+            }
+
+            pc = Globals.registerMap.get("pc");
+            
+            newPipe = new pipe(currentInst.opcode, pipePC);
+
+            // check for lw stall
+            if(currentInst.opcode.equals("lw")) {
+                nextInst = Globals.instList.get(pc);
+
+                // check if next instruction uses lw result
+                if ((nextInst.rs.equals(currentInst.rt)) 
+                 || (nextInst.rt.equals(currentInst.rt))) {
+                    newPipe.stall = true;
+                } 
+
+            }
+
+            // squash flag
+            if(currentInst.opcode.matches("beq|bne") && currentInst.taken) {
+                newPipe.threeSquash = true;
+            }
+
+            Globals.pipelineList.add(newPipe);
+
+            // check for jump
+            if(currentInst.opcode.matches("j|jal|jr")) {
+                Globals.pipelineList.add(new pipe("squash", pipePC + 1));
+            }
+
+            // squash instructions
+            if(newPipe.threeSquash) {
+
+                // add the next three instructions (to be squashed)
+                Globals.pipelineList.add(new pipe(Globals.instList.get(pipePC + 1).opcode, pipePC + 1));
+                Globals.pipelineList.add(new pipe(Globals.instList.get(pipePC + 2).opcode, pipePC + 2));
+                Globals.pipelineList.add(new pipe(Globals.instList.get(pipePC + 3).opcode, pipePC + 3));
+            }
+
+        }
+
+        // fill the end of the pipeline with empty vals
+        for(int i = 0; i < 4; i++) {
+            Globals.pipelineList.add(new pipe("empty", pc));
+        }
+    }
+
     public static void main(String args[]) throws IOException, IllegalArgumentException {
 
         if(!(args.length == 1 || args.length == 2)) {
@@ -180,6 +259,8 @@ class lab4 {
         }
 
         read_asm(args[0]);      // build instruction objects
+
+        run();                  // emulate instructions, build pipeline
 
         /* select mode */
         if (args.length == 2){

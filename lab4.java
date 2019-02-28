@@ -83,7 +83,7 @@ class Globals {
     public static int[] memory = new int[MEMORY_SIZE];
     public static ArrayList<inst> instList = new ArrayList<inst>();
 
-    public static int Cycles = 0;
+    public static int Cycles = 1;
     public static int Instructions = 0; // Used instead of 
     public static int pipePC = 0;
 

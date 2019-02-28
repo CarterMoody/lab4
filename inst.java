@@ -299,7 +299,7 @@ public class inst {
         }
 
         // send branch address to Instruction Memory
-        if(this.opcode.matches("beq|bne") && (this.ALUresult == 1)) {
+        if(this.opcode.matches("beq|bne") && (this.ALUresult == 0)) {
             Globals.registerMap.put("pc", Globals.registerMap.get("pc") + this.imm - 2); // why -2???
         }
 
@@ -327,13 +327,7 @@ public class inst {
                                 System.out.println("slt true");
                             break;
             case "beq"  : this.ALUresult = (this.r1 == this.r2) ? 1 : 0;    break;
-            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 1 : 0;
-                System.out.println("this.r1: " + this.r1);
-                System.out.println("this.rt: " + this.rt);
-                System.out.println("this.r2: " + this.r2);
-                    if(this.ALUresult == 1)
-                        System.out.println("bne true");
-                break;
+            case "bne"  : this.ALUresult = (this.r1 != this.r2) ? 1 : 0;    break;
 
             // memory operations
             case "sw"   :

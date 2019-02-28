@@ -189,6 +189,7 @@ class lab4 {
     /* run until the program ends */
     public static void run() {
         int pc = Globals.registerMap.get("pc");
+        int pipePC;
         inst currentInst, nextInst;
         pipe newPipe;
 
@@ -197,35 +198,52 @@ class lab4 {
             currentInst = Globals.instList.get(pc);
 
             currentInst.emulate_instruction(); // run instruction
-            
-            // set pc properly
-            if(currentInst.opcode.matches("j|jal|jr")) {
-                pc += 1;
-            } else {
-                pc = Globals.registerMap.get("pc");
-            }
-            
-            newPipe = new pipe(currentInst.opcode, pc);
+            interactive.dump();
 
-            // check for stall
+            // set pipe pc properly
+            if(currentInst.opcode.matches("j|jal|jr")) {
+                pipePC = pc + 1;
+            } else {
+                pipePC = Globals.registerMap.get("pc");
+            }
+
+            pc = Globals.registerMap.get("pc");
+            
+            newPipe = new pipe(currentInst.opcode, pipePC);
+
+            // check for lw stall
             if(currentInst.opcode.equals("lw")) {
                 nextInst = Globals.instList.get(pc);
 
-                if((nextInst.rs.equals(currentInst.rt)) 
-                || (nextInst.rt.equals(currentInst.rt))) {
+                // check if next instruction uses lw result
+                if ((nextInst.rs.equals(currentInst.rt)) 
+                 || (nextInst.rt.equals(currentInst.rt))) {
                     newPipe.stall = true;
                 } 
 
             }
 
-            // check for beq/bne
+            // squash flag
+            if(currentInst.opcode.equals("beq|bne") && currentInst.taken) {
+                newPipe.threeSquash = true;
+            }
 
             Globals.pipelineList.add(newPipe);
 
-            // check for jumps
+            // check for jump
             if(currentInst.opcode.matches("j|jal|jr")) {
-                Globals.pipelineList.add(new pipe("squash", pc + 1));
+                Globals.pipelineList.add(new pipe("squash", pipePC + 1));
             }
+
+            // squash instructions
+            if(newPipe.threeSquash) {
+
+                // add the next three instructions (to be squashed)
+                Globals.pipelineList.add(new pipe(Globals.instList.get(pc + 1).opcode, pc + 1));
+                Globals.pipelineList.add(new pipe(Globals.instList.get(pc + 2).opcode, pc + 2));
+                Globals.pipelineList.add(new pipe(Globals.instList.get(pc + 3).opcode, pc + 3));
+            }
+
         }
 
         // fill the end of the pipeline with empty vals

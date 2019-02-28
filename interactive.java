@@ -48,7 +48,7 @@ class interactive{
     private static final String MEM_ARGS_ERROR  = "        Invalid amount of arguments (use: m num1 num2)";
 
     /* print registers */
-    private static void dump() {
+    public static void dump() {
 
         int i = 0;
 
@@ -108,9 +108,19 @@ class interactive{
         pipe wb = Globals.pipelineList.get(0);  
         pipe ex = Globals.pipelineList.get(2);
         pipe d = Globals.pipelineList.get(3);
+        pipe f = Globals.pipelineList.get(4);
 
-        if(ex.stall) {
+        if(wb.stall) {
             Globals.pipelineList.add(3, new pipe("stall", d.pc));
+        }
+
+        if(d.threeSquash) {
+            Globals.pipelineList.pop();
+            Globals.pipelineList.pop();
+            Globals.pipelineList.pop();
+            Globals.pipelineList.add(0, new pipe("squash", d.pc));
+            Globals.pipelineList.add(0, new pipe("squash", d.pc));
+            Globals.pipelineList.add(0, new pipe("squash", d.pc));
         }
 
         // if not at the end
@@ -123,47 +133,6 @@ class interactive{
                 Globals.Instructions += 1;
         }
 
-        /*
-        inst wb, mem, ex, d;
-
-        wb  = Globals.pipelineList.get(3); 
-        mem = Globals.pipelineList.get(2);      
-        ex  = Globals.pipelineList.get(1);
-        d   = Globals.pipelineList.get(0);
-
-        f.emulate();
-        //wb.write_back(true);    
-        //mem.memory();
-
-        if(mem.opcode.matches("bne|beq") && mem.ALUresult == 0) {
-            // removes first three instructions
-            Globals.pipelineList.remove(0);
-            Globals.pipelineList.remove(0);
-            // replaces them with squash
-            Globals.pipelineList.add(0, new inst("squash", null, 0));
-            Globals.pipelineList.add(0, new inst("squash", null, 0));
-            Globals.pipelineList.add(0, new inst("squash", null, 0));
-        } else {
-
-            ex.execute();       
-            d.decode();         // decode before checking lw
-
-
-            // stall checks
-            if((ex.opcode.equals("lw")) && 
-            ((ex.wr.equals(d.rd)) || (ex.wr.equals(d.rs)) || (ex.wr.equals(d.rt))) &&
-            !ex.wr.equals(d.wr)) {
-                Globals.pipelineList.add(1, new inst("stall", null, 0));
-            } else if(d.opcode.matches("j|jr|jal")) {
-                Globals.pipelineList.add(0, new inst("squash", null, 0));
-            } else {
-                f.fetch();        // fetch the next instruction
-            }
-        }
-
-        Globals.Cycles += 1;    // increment Total Clock Cycles
-        */
-        
     }
 
     /* run step(s) */
@@ -215,8 +184,6 @@ class interactive{
 
     /* run until the program ends */
     private static void run() {
-
-        int pc = Globals.registerMap.get("pc");
 
         while(Globals.pipelineList.size() > 4) {
             pipelineStep();

@@ -120,11 +120,7 @@ public class inst {
     private String base;        // base register for:           lw, sw
     private int imm = 0;        // immediate integer for:       addi, beq, bne, lw (offset), sw (offset), sll (sa), j, jal
 
-    /* other pipeline */
-    public int ALUresult = 0;      // execute
-    private int MEMresult = 0;      // memory
-    public String wr;               // write_back
-    public Boolean taken = true;
+    public Boolean taken = false;
 
     private void immediateConvert(String immediate, boolean J) {
         int num = 0;
@@ -278,14 +274,14 @@ public class inst {
             case "and"  : rd = rs & rt;             break;
             case "or"   : rd = rs | rt;             break;
             case "add"  : rd = rs + rt;             break;
-            case "addi" : rs = rt + imm;            break;
+            case "addi" : rd = rs + imm;            break;
             case "sub"  : rd = rs - rt;             break;
             case "sll"  : rd = rt << this.imm;      break;
             case "slt"  : rd = (rs < rt) ? 1 : 0;   break;
         }
         
         if (this.opcode.equals("addi")) {
-            Globals.registerMap.put(this.rs, rs);   // store rd
+            Globals.registerMap.put(this.rt, rd);   // store rd
         } else {
             Globals.registerMap.put(this.rd, rd);   // store rd
         }
@@ -334,8 +330,10 @@ public class inst {
         }
 
         switch(this.opcode) {
-            case "beq"  : offset = (rs == rt) ? (this.imm + 1) : 1;     break;
-            case "bne"  : offset = (rs != rt) ? (this.imm + 1) : 1;     break;
+            case "beq"  : offset = (rs == rt) ? (this.imm + 1) : 1;     
+                          this.taken = (rs == rt);                      break;
+            case "bne"  : offset = (rs != rt) ? (this.imm + 1) : 1;     
+                          this.taken = (rs != rt);                      break;
             case "jal"  : Globals.registerMap.put("$ra", PC + 1);   // continue
             case "j"    : offset = this.imm;                            break;
             case "jr"   : offset = rs;                                  break; 

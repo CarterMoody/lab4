@@ -220,12 +220,12 @@ class lab4 {
                  || (nextInst.rt.equals(currentInst.rt))) {
 
                     if (nextInst.opcode.matches("lw|addi")) {
-                        if (nextInst.rs.equals(currentInst.rt)){
+                        if (nextInst.rt.equals(currentInst.rs)){
                             newPipe.stall = true;
                         }
                     }
 
-                    else {
+                    else{
                         //if (nextInst.opcode.matches("addi")){
                             newPipe.stall = true;
                        // }

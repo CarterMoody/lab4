@@ -219,16 +219,14 @@ class lab4 {
                 if ((nextInst.rs.equals(currentInst.rt)) 
                  || (nextInst.rt.equals(currentInst.rt))) {
 
-                    if (nextInst.opcode.matches("lw|addi")) {
+                    if (nextInst.opcode.equals("lw")) {
                         if (nextInst.rs.equals(currentInst.rt)){
                             newPipe.stall = true;
                         }
                     }
 
-                    else {
-                        //if (nextInst.opcode.matches("addi")){
-                            newPipe.stall = true;
-                       // }
+                    else{
+                        newPipe.stall = true;
                     }
                 } 
 

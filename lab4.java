@@ -198,7 +198,7 @@ class lab4 {
             currentInst = Globals.instList.get(pc);
 
             currentInst.emulate_instruction(); // run instruction
-            interactive.dump();
+            //interactive.dump();
 
             // set pipe pc properly
             if(currentInst.opcode.matches("j|jal|jr")) {
